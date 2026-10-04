@@ -453,6 +453,10 @@
             <p id="catalog-header-desc" class="text-xs text-slate-500 mt-1">リスニング・スピーキングでいつでも練習可能な文章ライブラリです</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <button onclick="reloadExternalCatalog()" title="外部アセットから最新教材を再読み込み・同期" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              カタログ同期
+            </button>
             <button onclick="openAddArticleModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
               新規教材を追加
@@ -468,12 +472,12 @@
         </div>
 
         <!-- Filter tags -->
-        <div class="flex items-center gap-2 pt-4 pb-2 overflow-x-auto">
-          <button onclick="filterCatalog('ALL')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">すべて</button>
-          <button onclick="filterCatalog('HSK4')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK4級</button>
-          <button onclick="filterCatalog('HSK5')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK5級</button>
-          <button onclick="filterCatalog('日常会話')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">日常会話</button>
-          <button onclick="filterCatalog('ビジネス')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">ビジネス</button>
+        <div id="catalog-filter-container" class="flex items-center gap-2 pt-4 pb-2 overflow-x-auto">
+          <button data-tag="ALL" onclick="filterCatalog('ALL')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">すべて</button>
+          <button data-tag="HSK4" onclick="filterCatalog('HSK4')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK4級</button>
+          <button data-tag="HSK5" onclick="filterCatalog('HSK5')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK5級</button>
+          <button data-tag="日常会話" onclick="filterCatalog('日常会話')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">日常会話</button>
+          <button data-tag="ビジネス" onclick="filterCatalog('ビジネス')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">ビジネス</button>
         </div>
 
         <!-- Catalog Grid -->
@@ -540,42 +544,14 @@
   <!-- MODAL: Custom Message Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
 
+  <!-- Externalized Catalog Bundle (Provides offline & file:// fallback support) -->
+  <script src="data/catalog.js"></script>
+
   <script>
-    /**
-     * Initial Catalog Data with Complete Chinese AND English Alignments
-     */
-    const DEFAULT_CATALOG = [
-      {
-        id: 'sample-1',
-        title: '咖啡馆点单与闲聊 (カフェでの注文と会話)',
-        titleEn: 'Ordering at a Café & Casual Conversation',
-        tag: '日常会話',
-        chinese: '你好，欢迎光临！请问您今天想喝点什么？我想要一杯热美式咖啡，不用加糖。好的，请问需要搭配我们店里的现烤可颂面包吗？今天有特价优惠哦。听起来很不错，那就再来一个原味可颂吧。总共是三十五元，请问您怎么支付？我用微信扫码支付。好的，这是您的小票和取餐号码牌，请稍候。',
-        english: 'Hello, welcome! What would you like to drink today? I would like a hot Americano, no sugar please. Sure! Would you like to pair it with our freshly baked croissants? We have a special discount today. That sounds great, let me also get an original croissant then. That comes to thirty-five yuan in total. How would you like to pay? I will pay by scanning the WeChat QR code. All right, here are your receipt and order number card. Please wait a moment.',
-        translation: 'こんにちは、いらっしゃいませ！本日は何をお召し上がりですか？ホットのアメリカンを一つ、砂糖は要りません。かしこまりました。店内で焼きたてのクロワッサンはいかがでしょうか？本日限定のお得な割引がございます。美味しそうですね、ではプレーンクロワッサンを一つ追加してください。合計で35元になります。お支払い方法はいかがされますか？WeChat PayのQRコードで支払います。承知しました。こちらがレシートと呼び出し番号札です。少々お待ちください。',
-        createdAt: '2026-03-01'
-      },
-      {
-        id: 'sample-2',
-        title: '关于习惯与生活节奏 (習慣と生活リズム)',
-        titleEn: 'Forming Good Habits & Daily Routine',
-        tag: 'ライフスタイル',
-        chinese: '研究表明，养成一个好习惯往往需要连续坚持二十一天以上。很多人在刚开始的时候信心十足，但几天后就会因为感到疲劳而放弃。其实，每天只要进步一点点，长期坚持下来就会产生巨大的改变。合理的作息时间和适量的体育运动，是保持身体健康和工作效率的重要基础。',
-        english: 'Studies show that forming a good habit often requires sticking with it for at least twenty-one consecutive days. Many people are full of confidence at the very beginning, but give up after a few days due to fatigue. In fact, making just a tiny bit of progress every day will lead to dramatic changes over time. A balanced schedule and moderate physical exercise are vital foundations for maintaining health and productivity.',
-        translation: '研究によると、良い習慣を身につけるには21日以上継続する必要があると言われています。多くの人は始めた当初は自信満々ですが、数日経つと疲労感から諦めてしまいます。実際には、毎日ほんの少しずつ進歩するだけで、長期的には非常に大きな変化を生み出します。規則正しい生活リズムと適度な運動は、健康と仕事の効率を維持するための重要な基盤です。',
-        createdAt: '2026-03-02'
-      },
-      {
-        id: 'sample-3',
-        title: '商务洽谈与合作 (ビジネス提携の協議)',
-        titleEn: 'Business Partnership Negotiations',
-        tag: 'ビジネス',
-        chinese: '王总，非常感谢您百忙之中抽出时间与我们团队进行深入探讨。我们已经详细阅读了贵公司提出的合作方案，总体上非常赞同双方在跨境物流领域的资源整合。不过，针对第三阶段的技术对接与数据安全协议，我们希望能够进一步细化权责。如果贵方同意，我们可以在下周一前提交修改后的正式合同草案。',
-        english: 'Mr. Wang, thank you very much for taking time out of your busy schedule to have in-depth discussions with our team. We have thoroughly reviewed the partnership proposal submitted by your company, and we fully agree with integrating our resources in cross-border logistics. However, regarding the technical integration and data security protocols in phase three, we hope to further clarify mutual responsibilities. If you agree, we can submit a revised formal draft agreement by next Monday.',
-        translation: '王総経理、お忙しいところ時間を割いて当方チームと詳細な議論を行っていただき、心より感謝申し上げます。貴社からご提案いただいた提携案を精読いたしましたが、越境物流分野での双方のリソース統合については全面的に賛同いたします。ただ、第3フェーズにおけるシステム連携とデータセキュリティ協定に関して、責任範囲をさらに明確化したいと考えております。もしご同意いただけるようであれば、来週月曜までに修正後の正式な契約書草案を提出いたします。',
-        createdAt: '2026-03-03'
-      }
-    ];
+    // Global Catalog & Material State
+    let catalog = [];
+    let masterCatalog = [];
+    let currentArticle = null;
 
     // Language Mode: 'zh' (Chinese) | 'en' (English)
     let currentAppLang = 'zh';
@@ -607,9 +583,11 @@
     let liveTranscription = '';
     let editingArticleId = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadCatalogFromStorage();
-      loadActiveArticle(catalog[0]);
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initializeCatalogData();
+      if (catalog.length > 0) {
+        loadActiveArticle(catalog[0]);
+      }
       setupVoiceSynthesis();
       setupSpeechRecognition();
       setupKeyboardShortcuts();
@@ -678,27 +656,133 @@
     }
 
     /**
-     * Storage Management
+     * External Catalog Loader & Smart Storage Management
      */
-    function loadCatalogFromStorage() {
+    async function initializeCatalogData() {
+      let externalMaterials = [];
+
+      // 1. Attempt dynamic HTTP fetch for manifests & individual JSONs (Live Server / HTTP hosting)
+      if (location.protocol.startsWith('http')) {
+        try {
+          const res = await fetch('data/materials/manifest.json', { cache: 'no-cache' });
+          if (res.ok) {
+            const manifestList = await res.json();
+            if (Array.isArray(manifestList) && manifestList.length > 0) {
+              const fetchPromises = manifestList.map(async (filename) => {
+                try {
+                  const itemRes = await fetch(`data/materials/${filename}`, { cache: 'no-cache' });
+                  return itemRes.ok ? await itemRes.json() : null;
+                } catch (err) {
+                  return null;
+                }
+              });
+              const fetchedItems = (await Promise.all(fetchPromises)).filter(Boolean);
+              if (fetchedItems.length > 0) {
+                externalMaterials = fetchedItems;
+              }
+            }
+          }
+        } catch (e) {
+          // Dynamic fetch not available, fallback to bundled script
+        }
+      }
+
+      // 2. Fallback to bundled window.DEFAULT_CATALOG from data/catalog.js
+      if (externalMaterials.length === 0 && Array.isArray(window.DEFAULT_CATALOG) && window.DEFAULT_CATALOG.length > 0) {
+        externalMaterials = window.DEFAULT_CATALOG;
+      }
+
+      masterCatalog = externalMaterials;
+      loadCatalogFromStorage();
+    }
+
+    function loadCatalogFromStorage(forceResetToExternal = false) {
+      if (forceResetToExternal) {
+        catalog = JSON.parse(JSON.stringify(masterCatalog));
+        saveCatalogToStorage();
+        renderCatalogFilters();
+        renderCatalogGrid('ALL');
+        return;
+      }
+
       const saved = localStorage.getItem('huayu_catalog_data_v2');
       if (saved) {
         try {
-          catalog = JSON.parse(saved);
-          catalog.forEach(item => {
-            if (!item.titleEn) {
-              const matchedDefault = DEFAULT_CATALOG.find(d => d.id === item.id);
-              item.titleEn = matchedDefault ? matchedDefault.titleEn : (item.title || 'English Practice Material');
-            }
-          });
+          const localCatalog = JSON.parse(saved);
+          if (Array.isArray(localCatalog)) {
+            // Smart Merge: Keep existing user materials/edits, and automatically import any new materials from masterCatalog
+            const merged = [...localCatalog];
+            masterCatalog.forEach(externalItem => {
+              const existingIndex = merged.findIndex(item => item.id === externalItem.id);
+              if (existingIndex === -1) {
+                // New external material detected! Append to catalog
+                merged.push(externalItem);
+              } else {
+                // Fill in titleEn if missing
+                if (!merged[existingIndex].titleEn && externalItem.titleEn) {
+                  merged[existingIndex].titleEn = externalItem.titleEn;
+                }
+              }
+            });
+            catalog = merged;
+          } else {
+            catalog = JSON.parse(JSON.stringify(masterCatalog));
+          }
         } catch (e) {
-          catalog = DEFAULT_CATALOG;
+          catalog = JSON.parse(JSON.stringify(masterCatalog));
         }
       } else {
-        catalog = DEFAULT_CATALOG;
-        saveCatalogToStorage();
+        catalog = JSON.parse(JSON.stringify(masterCatalog));
       }
-      renderCatalogGrid('ALL');
+
+      // Ensure fallback when empty
+      if (catalog.length === 0 && masterCatalog.length > 0) {
+        catalog = JSON.parse(JSON.stringify(masterCatalog));
+      }
+
+      saveCatalogToStorage();
+      renderCatalogFilters();
+      renderCatalogGrid(currentCatalogFilter || 'ALL');
+    }
+
+    async function reloadExternalCatalog() {
+      showToast('外部教材アセットを同期中...');
+      await initializeCatalogData();
+      if (!currentArticle && catalog.length > 0) {
+        loadActiveArticle(catalog[0]);
+      }
+      showToast(`${catalog.length}件の教材を同期しました`);
+    }
+
+    function renderCatalogFilters() {
+      const container = document.getElementById('catalog-filter-container');
+      if (!container) return;
+
+      const predefinedTags = ['ALL', '日常会話', 'ビジネス', 'HSK4', 'HSK5'];
+      const extraTags = [];
+      catalog.forEach(item => {
+        if (item.tag && !predefinedTags.includes(item.tag) && !extraTags.includes(item.tag)) {
+          extraTags.push(item.tag);
+        }
+      });
+
+      const allTags = [...predefinedTags, ...extraTags];
+      container.innerHTML = '';
+
+      allTags.forEach(tag => {
+        const btn = document.createElement('button');
+        btn.setAttribute('data-tag', tag);
+        const label = tag === 'ALL' ? 'すべて' : (tag === 'HSK4' || tag === 'HSK5' ? `${tag}級` : tag);
+        btn.textContent = label;
+        
+        const isActive = (currentCatalogFilter === tag) || (currentCatalogFilter === 'ALL' && tag === 'ALL');
+        btn.className = isActive
+          ? 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 transition-all'
+          : 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
+        
+        btn.onclick = () => filterCatalog(tag);
+        container.appendChild(btn);
+      });
     }
 
     function saveCatalogToStorage() {
@@ -1471,11 +1555,13 @@
     }
 
     function filterCatalog(tag) {
+      currentCatalogFilter = tag;
       document.querySelectorAll('.catalog-filter-btn').forEach(btn => {
-        if (btn.textContent.trim() === (tag === 'ALL' ? 'すべて' : tag)) {
-          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+        const btnTag = btn.getAttribute('data-tag') || (btn.textContent.trim() === 'すべて' ? 'ALL' : btn.textContent.trim());
+        if (btnTag === tag) {
+          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 transition-all';
         } else {
-          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200';
+          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
         }
       });
       renderCatalogGrid(tag);
@@ -1518,6 +1604,7 @@
       event.stopPropagation();
       catalog = catalog.filter(x => x.id !== id);
       saveCatalogToStorage();
+      renderCatalogFilters();
       renderCatalogGrid('ALL');
       showToast('教材をカタログから削除しました');
     }
@@ -1544,6 +1631,7 @@
           if (Array.isArray(imported)) {
             catalog = imported;
             saveCatalogToStorage();
+            renderCatalogFilters();
             renderCatalogGrid('ALL');
             showToast(`${imported.length}件の教材を読み込みました`);
           } else {
@@ -1630,6 +1718,7 @@
           catalog[index].updatedAt = new Date().toISOString().slice(0, 10);
 
           saveCatalogToStorage();
+          renderCatalogFilters();
           renderCatalogGrid(currentCatalogFilter);
 
           // If currently loaded in listening or speaking, reload it
@@ -1659,6 +1748,7 @@
       if (saveCatalog) {
         catalog.unshift(newArticle);
         saveCatalogToStorage();
+        renderCatalogFilters();
         renderCatalogGrid(currentCatalogFilter);
       }
 

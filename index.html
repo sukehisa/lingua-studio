@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinguaStudio | 中国語 & 英語学習スタジオ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+            cn: ['Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fdf2f2',
+              100: '#fde8e8',
+              500: '#e02424',
+              600: '#c81e1e',
+              700: '#9b1c1c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(150, 150, 150, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 100, 100, 0.5);
+    }
+    .active-sentence {
+      background-color: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding-left: 0.5rem;
+      border-radius: 0 0.375rem 0.375rem 0;
+      transition: all 0.2s ease;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .recording-pulse {
+      animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    ruby {
+      ruby-position: over;
+      ruby-align: center;
+    }
+    rt {
+      font-size: 0.65em;
+      color: #e02424;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      user-select: none;
+      line-height: 1.1;
+    }
+    .hide-pinyin rt {
+      display: none;
+    }
+    .speaking-sentence-active {
+      background-color: #fef2f2;
+      border-color: #f87171;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/90">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div id="brand-logo-badge" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-rose-200 transition-all">
+          华
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-900 leading-tight tracking-tight flex items-center gap-2">
+            LinguaStudio <span id="brand-lang-badge" class="text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-600 rounded-full border border-rose-200">中国語モード</span>
+          </h1>
+          <p class="text-xs text-slate-500 hidden sm:block">中国語 & 英語 リスニング・スピーキング集中特訓</p>
+        </div>
+      </div>
+
+      <!-- Top Level Language Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+        <button id="lang-btn-zh" onclick="setAppLanguage('zh')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-rose-600 shadow-sm">
+          <span>🇨🇳</span>
+          <span>中国語 (ZH)</span>
+        </button>
+        <button id="lang-btn-en" onclick="setAppLanguage('en')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+          <span>🇬🇧</span>
+          <span>英語 (EN)</span>
+        </button>
+      </div>
+
+      <!-- Navigation tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <button id="tab-btn-listening" onclick="switchTab('listening')" class="tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 bg-rose-50 text-rose-700 shadow-sm border border-rose-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+          <span>リスニング</span>
+        </button>
+        <button id="tab-btn-speaking" onclick="switchTab('speaking')" class="tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+          <span>スピーキング</span>
+        </button>
+        <button id="tab-btn-catalog" onclick="switchTab('catalog')" class="tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <span>教材カタログ</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- LISTENING VIEW -->
+    <div id="view-listening" class="space-y-6">
+      <!-- Top banner: current selected article info -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span id="active-article-tag" class="px-2 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700 rounded-md">日常会話</span>
+              <span id="active-sentence-counter" class="text-xs text-slate-500 font-medium">文: 0 / 0</span>
+            </div>
+            <h2 id="active-article-title" class="text-lg font-bold text-slate-900">咖啡馆点单与闲聊</h2>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openPasteModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            テキストを貼付
+          </button>
+          <button onclick="switchTab('catalog')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            教材一覧から選ぶ
+          </button>
+          <button onclick="sendActiveToSpeaking()" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            この文でスピーキング特訓へ
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Main Text Display Box (Left/Top) -->
+        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between min-h-[420px]">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 text-xs text-slate-500">
+              <span class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 句をクリックしてその位置から再生できます
+              </span>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs">
+                  <input type="checkbox" id="toggle-translation" onchange="toggleTranslationVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  訳文を表示
+                </label>
+                <div class="flex items-center gap-1">
+                  <button onclick="changeFontSize(-1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A-</button>
+                  <button onclick="changeFontSize(1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chinese Sentences Container -->
+            <div id="listening-text-flow" class="space-y-3 max-h-[380px] overflow-y-auto pr-2 text-base leading-relaxed">
+              <!-- Dynamically populated sentences -->
+            </div>
+          </div>
+
+          <!-- Bottom Shortcut Tip -->
+          <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+            <div class="flex items-center gap-3">
+              <label id="listening-pinyin-toggle-label" class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                <input type="checkbox" id="toggle-pinyin" onchange="togglePinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                <span>ピンイン (拼音) を表示</span>
+              </label>
+              <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Space</span> 再生/一時停止
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">← / →</span> 1秒/5秒移動
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">↑ / ↓</span> 前後文スキップ
+            </div>
+            <div id="playback-status-badge" class="font-medium text-slate-500">停止中</div>
+          </div>
+        </div>
+
+        <!-- Audio Player & Controls (Right/Bottom) -->
+        <div class="lg:col-span-4 space-y-5">
+          <!-- Main Player Box -->
+          <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span id="audio-controller-lang-tag" class="text-xs uppercase tracking-wider font-semibold text-rose-400">ZH Audio Controller</span>
+                <span id="elapsed-time-display" class="font-mono text-xs text-slate-400">00:00 / 00:00</span>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="relative w-full h-2 bg-slate-700 rounded-full cursor-pointer overflow-hidden mb-6" id="player-progress-bar" onclick="handleSeekClick(event)">
+                <div id="player-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
+              </div>
+
+              <!-- Primary Play/Pause Controls -->
+              <div class="flex items-center justify-center gap-4 mb-6">
+                <!-- Jump Prev Sentence -->
+                <button onclick="jumpSentence(-1)" title="前の文へ (↑)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+                </button>
+
+                <!-- Big Play/Pause Button -->
+                <button id="main-play-btn" onclick="togglePlay()" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-900/40 transform active:scale-95 transition-all">
+                  <svg id="play-icon" class="w-8 h-8 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg id="pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+
+                <!-- Jump Next Sentence -->
+                <button onclick="jumpSentence(1)" title="次の文へ (↓)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+
+              <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60 mb-5">
+                <div class="text-[11px] font-semibold text-slate-400 mb-2 text-center">秒単位スキップ・巻き戻し</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <!-- Rewind buttons -->
+                  <div class="flex items-center justify-center gap-1">
+                    <button onclick="seekBySeconds(-1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      -1秒
+                    </button>
+                    <button onclick="seekBySeconds(-5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      -5秒
+                    </button>
+                    <button onclick="seekBySeconds(-10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      -10秒
+                    </button>
+                  </div>
+                  <!-- Forward buttons -->
+                  <div class="flex items-center justify-center gap-1">
+                    <button onclick="seekBySeconds(1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      +1秒
+                    </button>
+                    <button onclick="seekBySeconds(5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      +5秒
+                    </button>
+                    <button onclick="seekBySeconds(10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
+                      +10秒
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Speed Controller -->
+              <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-400">再生速度 (Speed)</span>
+                  <span id="rate-indicator" class="font-mono font-bold text-rose-400">1.0x</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="setPlaybackRate(0.7)" class="rate-btn flex-1 py-1 text-xs rounded bg-slate-800 text-slate-300 hover:bg-slate-700">0.7x</button>
+                  <button onclick="setPlaybackRate(0.85)" class="rate-btn flex-1 py-1 text-xs rounded bg-slate-800 text-slate-300 hover:bg-slate-700">0.85x</button>
+                  <button onclick="setPlaybackRate(1.0)" class="rate-btn flex-1 py-1 text-xs rounded bg-rose-600 text-white font-semibold">1.0x</button>
+                  <button onclick="setPlaybackRate(1.25)" class="rate-btn flex-1 py-1 text-xs rounded bg-slate-800 text-slate-300 hover:bg-slate-700">1.25x</button>
+                  <button onclick="setPlaybackRate(1.5)" class="rate-btn flex-1 py-1 text-xs rounded bg-slate-800 text-slate-300 hover:bg-slate-700">1.5x</button>
+                </div>
+              </div>
+
+              <!-- Voice Selection -->
+              <div class="space-y-1">
+                <label for="voice-select" class="text-xs text-slate-400">中国語音声 (Voice)</label>
+                <select id="voice-select" onchange="onVoiceChange()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500">
+                  <option value="">ブラウザ既定の中国語 (zh-CN)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Single sentence repeat loop -->
+            <div class="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+              <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                <input type="checkbox" id="single-repeat-toggle" class="rounded bg-slate-700 text-rose-500 focus:ring-rose-500">
+                1文リピート再生 (シャドーイング用)
+              </label>
+              <button onclick="restartSentence()" class="text-rose-400 hover:text-rose-300 text-xs font-medium">この文を頭出し</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPEAKING VIEW -->
+    <div id="view-speaking" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Speech Prompt and Target Material -->
+        <div class="lg:col-span-6 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-200">スピーキング練習文章</span>
+                <span id="speaking-mode-badge" class="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded">文単位リスト形式</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                  <input type="checkbox" id="toggle-speaking-pinyin" onchange="toggleSpeakingPinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  ピンイン表示
+                </label>
+                <button onclick="switchTab('catalog')" class="text-xs text-rose-600 hover:underline flex items-center gap-1">
+                  教材から読み込む &rarr;
+                </button>
+              </div>
+            </div>
+
+            <!-- Sentence List Container for Speaking -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <span>文をクリックして集中練習する対象を選択・お手本音声を再生できます</span>
+                <button onclick="toggleSpeakingEditMode()" id="speaking-mode-toggle-btn" class="text-rose-600 hover:underline">テキスト直接編集</button>
+              </div>
+
+              <!-- Sentence List Mode -->
+              <div id="speaking-sentences-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                <!-- Dynamically populated sentences -->
+              </div>
+
+              <!-- Direct Edit Mode (hidden by default) -->
+              <div id="speaking-textarea-container" class="hidden space-y-2">
+                <textarea id="speaking-target-text" rows="5" class="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-sans text-base focus:ring-2 focus:ring-rose-500 focus:border-rose-500 resize-none" placeholder="練習したい文章を入力してください..."></textarea>
+                <div class="flex justify-end">
+                  <button onclick="applySpeakingCustomText()" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700">リストに反映して練習</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Current Targeted Sentence Display for Practice -->
+            <div id="speaking-focused-card" class="mt-4 p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-bold text-amber-800">現在選択中の練習センテンス:</span>
+                <button onclick="playSpeakingTargetVoice()" class="flex items-center gap-1 text-xs text-amber-900 font-medium hover:text-rose-600 transition-colors bg-white px-2 py-0.5 rounded border border-amber-300 shadow-xs">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"></path></svg>
+                  お手本を聞く
+                </button>
+              </div>
+              <div id="speaking-active-sentence-content" class="text-slate-900 text-base leading-relaxed">
+                <!-- Active text will appear here -->
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
+              <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div>
+                <strong>練習のコツ:</strong> 選択した文をお手本音声で確認後、録音タイマーをスタート。<span id="speaking-tip-lang">中国語（zh-CN）</span>のリアルタイム文字起こし結果と照らし合わせて、正しく発音できているかチェックしましょう。
+              </div>
+            </div>
+          </div>
+
+          <!-- Recorded Audio List -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center justify-between">
+              <span>録音履歴 (今回のセッション)</span>
+              <span id="recording-count-badge" class="text-xs font-normal text-slate-500">0 件</span>
+            </h3>
+            <div id="recording-history-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              <div class="text-center py-8 text-xs text-slate-400">
+                まだ録音がありません。「録音開始」を押して練習を始めましょう！
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Timer & Recorder Card -->
+        <div class="lg:col-span-6 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <!-- Background pulse circle while recording -->
+            <div id="rec-pulse-effect" class="absolute w-64 h-64 rounded-full bg-rose-500/10 recording-pulse hidden pointer-events-none"></div>
+
+            <!-- Timer Settings (Seconds Selector) -->
+            <div class="w-full flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">制限タイマー設定</span>
+              <div class="flex items-center gap-1.5">
+                <button onclick="setTimerLimit(30)" class="timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">30秒</button>
+                <button onclick="setTimerLimit(60)" class="timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-rose-600 text-white font-bold shadow-sm">60秒</button>
+                <button onclick="setTimerLimit(90)" class="timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">90秒</button>
+                <button onclick="setTimerLimit(120)" class="timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">120秒</button>
+              </div>
+            </div>
+
+            <!-- Circular Progress & Timer Display -->
+            <div class="relative w-48 h-48 flex items-center justify-center my-2">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" class="stroke-slate-100" stroke-width="8" fill="none" />
+                <circle id="timer-progress-ring" cx="60" cy="60" r="52" class="stroke-rose-600 transition-all duration-200" stroke-width="8" stroke-dasharray="326.72" stroke-dashoffset="0" stroke-linecap="round" fill="none" />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="timer-countdown-text" class="text-5xl font-mono font-bold text-slate-800 tracking-tight">60</span>
+                <span class="text-xs uppercase text-slate-400 font-medium mt-1">SECONDS</span>
+              </div>
+            </div>
+
+            <!-- Big Record Button -->
+            <div class="my-6">
+              <button id="toggle-record-btn" onclick="toggleRecording()" class="relative z-10 w-20 h-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-xl shadow-rose-200 active:scale-95 transition-all">
+                <svg id="mic-icon" class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                <div id="stop-icon" class="w-7 h-7 bg-white rounded-md hidden"></div>
+              </button>
+              <p id="record-status-label" class="mt-3 text-xs font-semibold text-slate-600">「録音開始」を押して話してください</p>
+            </div>
+
+            <!-- Real-time Live Transcription Box -->
+            <div class="w-full text-left bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                <span class="flex items-center gap-1.5 font-medium">
+                  <span id="transcription-indicator" class="w-2 h-2 rounded-full bg-slate-300"></span> リアルタイム文字起こし (<span id="stt-current-lang-code">zh-CN</span>)
+                </span>
+                <button onclick="copyTranscription()" class="text-rose-600 hover:underline text-xs">コピー</button>
+              </div>
+              <p id="live-transcription-text" class="text-slate-800 text-sm min-h-[50px] leading-relaxed italic text-slate-400">
+                発話内容がここにリアルタイムで表示されます...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOG VIEW -->
+    <div id="view-catalog" class="space-y-6 hidden">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+          <div>
+            <h2 id="catalog-header-title" class="text-xl font-bold text-slate-900">中国語教材カタログ</h2>
+            <p id="catalog-header-desc" class="text-xs text-slate-500 mt-1">リスニング・スピーキングでいつでも練習可能な文章ライブラリです</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openAddArticleModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              新規教材を追加
+            </button>
+            <button onclick="exportCatalogData()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors">
+              書き出し (JSON)
+            </button>
+            <label class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors cursor-pointer">
+              読み込み (JSON)
+              <input type="file" id="catalog-import-input" accept=".json" class="hidden" onchange="importCatalogData(event)">
+            </label>
+          </div>
+        </div>
+
+        <!-- Filter tags -->
+        <div class="flex items-center gap-2 pt-4 pb-2 overflow-x-auto">
+          <button onclick="filterCatalog('ALL')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">すべて</button>
+          <button onclick="filterCatalog('HSK4')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK4級</button>
+          <button onclick="filterCatalog('HSK5')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK5級</button>
+          <button onclick="filterCatalog('日常会話')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">日常会話</button>
+          <button onclick="filterCatalog('ビジネス')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">ビジネス</button>
+        </div>
+
+        <!-- Catalog Grid -->
+        <div id="catalog-card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <!-- Dynamically inserted cards -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Quick Paste Text -->
+  <div id="paste-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-form-title" class="font-bold text-slate-900 text-base">文章を直接ペーストして即学習</h3>
+        <button onclick="closePasteModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">中国語タイトル (ZH Title)</label>
+            <input type="text" id="paste-input-title" placeholder="例: 咖啡馆点单与闲聊" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-cn focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">英語タイトル (EN Title)</label>
+            <input type="text" id="paste-input-title-en" placeholder="e.g. Ordering at a Café" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-sans focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">カテゴリー / タグ</label>
+          <input type="text" id="paste-input-tag" placeholder="例: 日常会話, ビジネス, HSK4, HSK5 など" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">中国語 (ZH) 本文 (必須)</label>
+          <textarea id="paste-input-chinese" rows="3" placeholder="中国語の文章を入力してください（。！？で自動分割）" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-cn focus:ring-2 focus:ring-rose-500 focus:border-rose-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">英語 (EN) 本文 (必須)</label>
+          <textarea id="paste-input-english" rows="3" placeholder="対応する英文を入力してください（. ! ?で自動分割）" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">日本語訳 (任意)</label>
+          <textarea id="paste-input-translation" rows="2" placeholder="日本語訳があれば入力してください" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+        <label id="paste-save-label" class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+          <input type="checkbox" id="paste-save-to-catalog" class="rounded text-rose-600 focus:ring-rose-500" checked>
+          <span>教材カタログにも保存する</span>
+        </label>
+        <div class="flex items-center gap-2">
+          <button onclick="closePasteModal()" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100">キャンセル</button>
+          <button id="modal-submit-btn" onclick="applyPastedText()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm">読み込む</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Custom Message Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+  <script>
+    /**
+     * Initial Catalog Data with Complete Chinese AND English Alignments
+     */
+    const DEFAULT_CATALOG = [
+      {
+        id: 'sample-1',
+        title: '咖啡馆点单与闲聊 (カフェでの注文と会話)',
+        titleEn: 'Ordering at a Café & Casual Conversation',
+        tag: '日常会話',
+        chinese: '你好，欢迎光临！请问您今天想喝点什么？我想要一杯热美式咖啡，不用加糖。好的，请问需要搭配我们店里的现烤可颂面包吗？今天有特价优惠哦。听起来很不错，那就再来一个原味可颂吧。总共是三十五元，请问您怎么支付？我用微信扫码支付。好的，这是您的小票和取餐号码牌，请稍候。',
+        english: 'Hello, welcome! What would you like to drink today? I would like a hot Americano, no sugar please. Sure! Would you like to pair it with our freshly baked croissants? We have a special discount today. That sounds great, let me also get an original croissant then. That comes to thirty-five yuan in total. How would you like to pay? I will pay by scanning the WeChat QR code. All right, here are your receipt and order number card. Please wait a moment.',
+        translation: 'こんにちは、いらっしゃいませ！本日は何をお召し上がりですか？ホットのアメリカンを一つ、砂糖は要りません。かしこまりました。店内で焼きたてのクロワッサンはいかがでしょうか？本日限定のお得な割引がございます。美味しそうですね、ではプレーンクロワッサンを一つ追加してください。合計で35元になります。お支払い方法はいかがされますか？WeChat PayのQRコードで支払います。承知しました。こちらがレシートと呼び出し番号札です。少々お待ちください。',
+        createdAt: '2026-03-01'
+      },
+      {
+        id: 'sample-2',
+        title: '关于习惯与生活节奏 (習慣と生活リズム)',
+        titleEn: 'Forming Good Habits & Daily Routine',
+        tag: 'ライフスタイル',
+        chinese: '研究表明，养成一个好习惯往往需要连续坚持二十一天以上。很多人在刚开始的时候信心十足，但几天后就会因为感到疲劳而放弃。其实，每天只要进步一点点，长期坚持下来就会产生巨大的改变。合理的作息时间和适量的体育运动，是保持身体健康和工作效率的重要基础。',
+        english: 'Studies show that forming a good habit often requires sticking with it for at least twenty-one consecutive days. Many people are full of confidence at the very beginning, but give up after a few days due to fatigue. In fact, making just a tiny bit of progress every day will lead to dramatic changes over time. A balanced schedule and moderate physical exercise are vital foundations for maintaining health and productivity.',
+        translation: '研究によると、良い習慣を身につけるには21日以上継続する必要があると言われています。多くの人は始めた当初は自信満々ですが、数日経つと疲労感から諦めてしまいます。実際には、毎日ほんの少しずつ進歩するだけで、長期的には非常に大きな変化を生み出します。規則正しい生活リズムと適度な運動は、健康と仕事の効率を維持するための重要な基盤です。',
+        createdAt: '2026-03-02'
+      },
+      {
+        id: 'sample-3',
+        title: '商务洽谈与合作 (ビジネス提携の協議)',
+        titleEn: 'Business Partnership Negotiations',
+        tag: 'ビジネス',
+        chinese: '王总，非常感谢您百忙之中抽出时间与我们团队进行深入探讨。我们已经详细阅读了贵公司提出的合作方案，总体上非常赞同双方在跨境物流领域的资源整合。不过，针对第三阶段的技术对接与数据安全协议，我们希望能够进一步细化权责。如果贵方同意，我们可以在下周一前提交修改后的正式合同草案。',
+        english: 'Mr. Wang, thank you very much for taking time out of your busy schedule to have in-depth discussions with our team. We have thoroughly reviewed the partnership proposal submitted by your company, and we fully agree with integrating our resources in cross-border logistics. However, regarding the technical integration and data security protocols in phase three, we hope to further clarify mutual responsibilities. If you agree, we can submit a revised formal draft agreement by next Monday.',
+        translation: '王総経理、お忙しいところ時間を割いて当方チームと詳細な議論を行っていただき、心より感謝申し上げます。貴社からご提案いただいた提携案を精読いたしましたが、越境物流分野での双方のリソース統合については全面的に賛同いたします。ただ、第3フェーズにおけるシステム連携とデータセキュリティ協定に関して、責任範囲をさらに明確化したいと考えております。もしご同意いただけるようであれば、来週月曜までに修正後の正式な契約書草案を提出いたします。',
+        createdAt: '2026-03-03'
+      }
+    ];
+
+    // Language Mode: 'zh' (Chinese) | 'en' (English)
+    let currentAppLang = 'zh';
+    let currentCatalogFilter = 'ALL';
+    let sentences = [];
+    let currentSentenceIndex = 0;
+    let playbackRate = 1.0;
+    let isPlaying = false;
+    let selectedVoice = null;
+    let currentUtterance = null;
+    let fontSizeLevel = 0; // -1, 0, 1, 2
+    let isSingleRepeat = false;
+
+    let showPinyin = true;
+    let showSpeakingPinyin = true;
+    let speakingSentences = [];
+    let activeSpeakingSentenceIndex = 0;
+    let isSpeakingTextareaMode = false;
+
+    // Speaking State
+    let timerDuration = 60;
+    let timerRemaining = 60;
+    let timerInterval = null;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedAudios = [];
+    let speechRecognizer = null;
+    let liveTranscription = '';
+    let editingArticleId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCatalogFromStorage();
+      loadActiveArticle(catalog[0]);
+      setupVoiceSynthesis();
+      setupSpeechRecognition();
+      setupKeyboardShortcuts();
+      updateTimerDisplay(timerDuration);
+    });
+
+    /**
+     * Top-level language switcher
+     */
+    function setAppLanguage(lang) {
+      if (currentAppLang === lang) return;
+      currentAppLang = lang;
+      
+      const btnZh = document.getElementById('lang-btn-zh');
+      const btnEn = document.getElementById('lang-btn-en');
+      const brandBadge = document.getElementById('brand-lang-badge');
+      const brandLogo = document.getElementById('brand-logo-badge');
+      const listeningPinyinLabel = document.getElementById('listening-pinyin-toggle-label');
+      const speakingTipLang = document.getElementById('speaking-tip-lang');
+      const sttLangCode = document.getElementById('stt-current-lang-code');
+      const audioControllerLangTag = document.getElementById('audio-controller-lang-tag');
+      const currentLangIndicator = document.getElementById('current-lang-indicator');
+      const catalogHeaderTitle = document.getElementById('catalog-header-title');
+      const catalogHeaderDesc = document.getElementById('catalog-header-desc');
+
+      if (lang === 'zh') {
+        btnZh.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-rose-600 shadow-sm';
+        btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5';
+        brandBadge.textContent = '中国語モード';
+        brandBadge.className = 'text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-600 rounded-full border border-rose-200';
+        brandLogo.textContent = '华';
+        brandLogo.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-rose-200 transition-all';
+        listeningPinyinLabel.classList.remove('hidden');
+        speakingTipLang.textContent = '中国語（zh-CN）';
+        sttLangCode.textContent = 'zh-CN';
+        audioControllerLangTag.textContent = 'ZH Audio Controller';
+        audioControllerLangTag.className = 'text-xs uppercase tracking-wider font-semibold text-rose-400';
+        currentLangIndicator.textContent = '現在: 中国語';
+        if (catalogHeaderTitle) catalogHeaderTitle.textContent = '中国語教材カタログ';
+        if (catalogHeaderDesc) catalogHeaderDesc.textContent = 'リスニング・スピーキングでいつでも練習可能な中国語ライブラリです';
+      } else {
+        btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-blue-600 shadow-sm';
+        btnZh.className = 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5';
+        brandBadge.textContent = '英語モード';
+        brandBadge.className = 'text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-200';
+        brandLogo.textContent = 'En';
+        brandLogo.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-blue-200 transition-all';
+        listeningPinyinLabel.classList.add('hidden');
+        speakingTipLang.textContent = '英語（en-US）';
+        sttLangCode.textContent = 'en-US';
+        audioControllerLangTag.textContent = 'EN Audio Controller';
+        audioControllerLangTag.className = 'text-xs uppercase tracking-wider font-semibold text-blue-400';
+        currentLangIndicator.textContent = '現在: 英語';
+        if (catalogHeaderTitle) catalogHeaderTitle.textContent = '英語教材カタログ';
+        if (catalogHeaderDesc) catalogHeaderDesc.textContent = 'リスニング・スピーキングでいつでも練習可能な英語ライブラリです';
+      }
+
+      setupVoiceSynthesis();
+      setupSpeechRecognition();
+
+      if (currentArticle) {
+        loadActiveArticle(currentArticle);
+      }
+      renderCatalogGrid(currentCatalogFilter);
+      showToast(lang === 'zh' ? '中国語学習モードに切り替えました' : '英語学習モードに切り替えました');
+    }
+
+    /**
+     * Storage Management
+     */
+    function loadCatalogFromStorage() {
+      const saved = localStorage.getItem('huayu_catalog_data_v2');
+      if (saved) {
+        try {
+          catalog = JSON.parse(saved);
+          catalog.forEach(item => {
+            if (!item.titleEn) {
+              const matchedDefault = DEFAULT_CATALOG.find(d => d.id === item.id);
+              item.titleEn = matchedDefault ? matchedDefault.titleEn : (item.title || 'English Practice Material');
+            }
+          });
+        } catch (e) {
+          catalog = DEFAULT_CATALOG;
+        }
+      } else {
+        catalog = DEFAULT_CATALOG;
+        saveCatalogToStorage();
+      }
+      renderCatalogGrid('ALL');
+    }
+
+    function saveCatalogToStorage() {
+      localStorage.setItem('huayu_catalog_data_v2', JSON.stringify(catalog));
+    }
+
+    function setupVoiceSynthesis() {
+      if (!('speechSynthesis' in window)) {
+        showToast('お使いのブラウザは音声合成に対応していません', 'error');
+        return;
+      }
+
+      function populateVoiceList() {
+        const voices = window.speechSynthesis.getVoices();
+        const voiceSelect = document.getElementById('voice-select');
+        voiceSelect.innerHTML = '';
+
+        const targetLangPrefix = currentAppLang === 'zh' ? 'zh' : 'en';
+        const filteredVoices = voices.filter(v => v.lang.toLowerCase().startsWith(targetLangPrefix));
+        
+        if (filteredVoices.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = currentAppLang === 'zh' ? '標準の中国語音声 (zh-CN)' : '標準の英語音声 (en-US)';
+          voiceSelect.appendChild(opt);
+          selectedVoice = null;
+          return;
+        }
+
+        filteredVoices.forEach((voice) => {
+          const opt = document.createElement('option');
+          opt.value = voice.name;
+          opt.textContent = `${voice.name} (${voice.lang})`;
+          if (
+            (currentAppLang === 'zh' && (voice.default || voice.lang === 'zh-CN')) ||
+            (currentAppLang === 'en' && (voice.default || voice.lang === 'en-US' || voice.lang === 'en-GB'))
+          ) {
+            opt.selected = true;
+            selectedVoice = voice;
+          }
+          voiceSelect.appendChild(opt);
+        });
+
+        if (!selectedVoice && filteredVoices.length > 0) {
+          selectedVoice = filteredVoices[0];
+        }
+      }
+
+      populateVoiceList();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+      }
+    }
+
+    function onVoiceChange() {
+      const select = document.getElementById('voice-select');
+      const voices = window.speechSynthesis.getVoices();
+      selectedVoice = voices.find(v => v.name === select.value) || null;
+      if (isPlaying) {
+        restartSentence();
+      }
+    }
+
+    function loadActiveArticle(article) {
+      if (!article) return;
+      currentArticle = article;
+      const displayTitle = currentAppLang === 'en' ? (article.titleEn || article.title) : article.title;
+      document.getElementById('active-article-title').textContent = displayTitle;
+      document.getElementById('active-article-tag').textContent = article.tag || '教材';
+      
+      const targetText = currentAppLang === 'zh' ? article.chinese : (article.english || article.chinese);
+      sentences = splitIntoSentences(targetText, article.translation, currentAppLang);
+      currentSentenceIndex = 0;
+      renderSentencesList();
+      updateSentenceCounter();
+      stopPlayback();
+
+      setSpeakingSentencesFromArticle(article);
+    }
+
+    /**
+     * Converts text to ruby HTML markup with Pinyin (Chinese only)
+     */
+    function renderPinyinRuby(text) {
+      if (!text) return '';
+      if (currentAppLang !== 'zh') {
+        return escapeHtml(text);
+      }
+      if (typeof pinyinPro === 'undefined' || !pinyinPro.html) {
+        return escapeHtml(text);
+      }
+      try {
+        return pinyinPro.html(text);
+      } catch (err) {
+        return escapeHtml(text);
+      }
+    }
+
+    function splitIntoSentences(targetText, japaneseText, lang) {
+      if (!targetText) return [];
+      let regex;
+      if (lang === 'zh') {
+        regex = /([^。！？\n]+[。！？\n]?)/g;
+      } else {
+        // English sentence splitter
+        regex = /([^.!?\n]+[.!?\n]?)/g;
+      }
+      const matches = targetText.match(regex) || [targetText];
+      
+      let jpMatches = [];
+      if (japaneseText) {
+        jpMatches = japaneseText.match(/([^。！？\n]+[。！？\n]?)/g) || [];
+      }
+
+      return matches.map((item, idx) => {
+        const text = item.trim();
+        return {
+          id: idx,
+          content: text,
+          jp: jpMatches[idx] ? jpMatches[idx].trim() : ''
+        };
+      }).filter(s => s.content.length > 0);
+    }
+
+    function renderSentencesList() {
+      const container = document.getElementById('listening-text-flow');
+      container.innerHTML = '';
+
+      sentences.forEach((sentence, index) => {
+        const item = document.createElement('div');
+        item.id = `sentence-item-${index}`;
+        item.className = `cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100 ${index === currentSentenceIndex ? 'active-sentence' : ''} ${currentAppLang === 'zh' && !showPinyin ? 'hide-pinyin' : ''}`;
+        item.onclick = () => selectAndPlaySentence(index);
+
+        const mainPara = document.createElement('div');
+        mainPara.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} font-medium text-slate-800 tracking-wide text-base leading-relaxed`;
+        mainPara.innerHTML = currentAppLang === 'zh' ? renderPinyinRuby(sentence.content) : escapeHtml(sentence.content);
+
+        const jpPara = document.createElement('p');
+        jpPara.className = 'sentence-trans text-xs text-slate-500 mt-1';
+        jpPara.textContent = sentence.jp || '';
+        if (!document.getElementById('toggle-translation').checked) {
+          jpPara.classList.add('hidden');
+        }
+
+        item.appendChild(mainPara);
+        if (sentence.jp) item.appendChild(jpPara);
+        container.appendChild(item);
+      });
+    }
+
+    function togglePinyinVisibility() {
+      showPinyin = document.getElementById('toggle-pinyin').checked;
+      const container = document.getElementById('listening-text-flow');
+      if (showPinyin) {
+        container.querySelectorAll('#listening-text-flow > div').forEach(el => el.classList.remove('hide-pinyin'));
+      } else {
+        container.querySelectorAll('#listening-text-flow > div').forEach(el => el.classList.add('hide-pinyin'));
+      }
+    }
+
+    function toggleSpeakingPinyinVisibility() {
+      showSpeakingPinyin = document.getElementById('toggle-speaking-pinyin').checked;
+      renderSpeakingSentencesList();
+      updateSpeakingFocusedDisplay();
+    }
+
+    function setSpeakingSentencesFromArticle(article) {
+      if (!article) return;
+      const targetText = currentAppLang === 'zh' ? article.chinese : (article.english || article.chinese);
+      speakingSentences = splitIntoSentences(targetText, article.translation, currentAppLang);
+      activeSpeakingSentenceIndex = 0;
+      document.getElementById('speaking-target-text').value = targetText;
+      renderSpeakingSentencesList();
+      updateSpeakingFocusedDisplay();
+    }
+
+    function renderSpeakingSentencesList() {
+      const container = document.getElementById('speaking-sentences-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (speakingSentences.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center">文章がありません。テキストを直接入力するか教材を選んでください。</div>';
+        return;
+      }
+
+      speakingSentences.forEach((sentence, idx) => {
+        const row = document.createElement('div');
+        const isActive = idx === activeSpeakingSentenceIndex;
+        row.className = `p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+          isActive ? 'speaking-sentence-active border-rose-400 bg-rose-50/70 shadow-xs' : 'border-slate-200 bg-white hover:bg-slate-50'
+        } ${currentAppLang === 'zh' && !showSpeakingPinyin ? 'hide-pinyin' : ''}`;
+        
+        row.onclick = () => selectSpeakingSentence(idx);
+
+        const left = document.createElement('div');
+        left.className = 'flex-1';
+
+        const indexBadge = document.createElement('span');
+        indexBadge.className = `text-[10px] font-mono px-1.5 py-0.5 rounded mr-2 ${
+          isActive ? 'bg-rose-200 text-rose-800' : 'bg-slate-100 text-slate-500'
+        }`;
+        indexBadge.textContent = `#${idx + 1}`;
+
+        const textDiv = document.createElement('div');
+        textDiv.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} text-slate-900 text-sm leading-relaxed inline`;
+        textDiv.innerHTML = currentAppLang === 'zh' ? renderPinyinRuby(sentence.content) : escapeHtml(sentence.content);
+
+        left.appendChild(indexBadge);
+        left.appendChild(textDiv);
+
+        if (sentence.jp) {
+          const jpP = document.createElement('p');
+          jpP.className = 'text-xs text-slate-500 mt-1';
+          jpP.textContent = sentence.jp;
+          left.appendChild(jpP);
+        }
+
+        const playBtn = document.createElement('button');
+        playBtn.className = 'shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors';
+        playBtn.title = 'この文のお手本を聞く';
+        playBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        playBtn.onclick = (e) => {
+          e.stopPropagation();
+          selectSpeakingSentence(idx);
+          playSpeakingTargetVoice();
+        };
+
+        row.appendChild(left);
+        row.appendChild(playBtn);
+        container.appendChild(row);
+      });
+    }
+
+    function selectSpeakingSentence(index) {
+      if (index < 0 || index >= speakingSentences.length) return;
+      activeSpeakingSentenceIndex = index;
+      renderSpeakingSentencesList();
+      updateSpeakingFocusedDisplay();
+    }
+
+    function updateSpeakingFocusedDisplay() {
+      const targetDiv = document.getElementById('speaking-active-sentence-content');
+      if (!targetDiv) return;
+
+      if (speakingSentences.length > 0 && speakingSentences[activeSpeakingSentenceIndex]) {
+        const item = speakingSentences[activeSpeakingSentenceIndex];
+        targetDiv.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} text-slate-900 text-base leading-relaxed ${currentAppLang === 'zh' && !showSpeakingPinyin ? 'hide-pinyin' : ''}`;
+        targetDiv.innerHTML = currentAppLang === 'zh' ? renderPinyinRuby(item.content) : escapeHtml(item.content);
+      } else {
+        targetDiv.innerHTML = '<span class="text-slate-400 text-xs">練習する文が選択されていません</span>';
+      }
+    }
+
+    function playSpeakingTargetVoice() {
+      if (speakingSentences.length === 0 || !speakingSentences[activeSpeakingSentenceIndex]) return;
+      window.speechSynthesis.cancel();
+
+      const text = speakingSentences[activeSpeakingSentenceIndex].content;
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+      utt.rate = playbackRate || 1.0;
+      if (selectedVoice) utt.voice = selectedVoice;
+
+      window.speechSynthesis.speak(utt);
+    }
+
+    function toggleSpeakingEditMode() {
+      isSpeakingTextareaMode = !isSpeakingTextareaMode;
+      const listEl = document.getElementById('speaking-sentences-list');
+      const textEl = document.getElementById('speaking-textarea-container');
+      const toggleBtn = document.getElementById('speaking-mode-toggle-btn');
+      const badge = document.getElementById('speaking-mode-badge');
+
+      if (isSpeakingTextareaMode) {
+        listEl.classList.add('hidden');
+        textEl.classList.remove('hidden');
+        toggleBtn.textContent = '文リスト表示に戻す';
+        badge.textContent = '手動編集モード';
+      } else {
+        listEl.classList.remove('hidden');
+        textEl.classList.add('hidden');
+        toggleBtn.textContent = 'テキスト直接編集';
+        badge.textContent = '文単位リスト形式';
+      }
+    }
+
+    function applySpeakingCustomText() {
+      const raw = document.getElementById('speaking-target-text').value.trim();
+      if (!raw) {
+        showToast('文章を入力してください', 'error');
+        return;
+      }
+      speakingSentences = splitIntoSentences(raw, '', currentAppLang);
+      activeSpeakingSentenceIndex = 0;
+      toggleSpeakingEditMode();
+      renderSpeakingSentencesList();
+      updateSpeakingFocusedDisplay();
+      showToast('文章を文リストに分解しました');
+    }
+
+    function selectAndPlaySentence(index) {
+      if (index < 0 || index >= sentences.length) return;
+      currentSentenceIndex = index;
+      highlightActiveSentence();
+      updateSentenceCounter();
+      playCurrentSentence();
+    }
+
+    function highlightActiveSentence() {
+      sentences.forEach((_, idx) => {
+        const el = document.getElementById(`sentence-item-${idx}`);
+        if (el) {
+          if (idx === currentSentenceIndex) {
+            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 active-sentence';
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100';
+          }
+        }
+      });
+      updateProgressBar();
+    }
+
+    function updateSentenceCounter() {
+      const el = document.getElementById('active-sentence-counter');
+      if (el) {
+        el.textContent = `文: ${sentences.length > 0 ? currentSentenceIndex + 1 : 0} / ${sentences.length}`;
+      }
+    }
+
+    function updateProgressBar() {
+      if (sentences.length === 0) return;
+      const pct = ((currentSentenceIndex + 1) / sentences.length) * 100;
+      document.getElementById('player-progress-fill').style.width = `${pct}%`;
+      document.getElementById('elapsed-time-display').textContent = `${currentSentenceIndex + 1} / ${sentences.length} 句`;
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        stopPlayback();
+      } else {
+        playCurrentSentence();
+      }
+    }
+
+    function playCurrentSentence() {
+      if (sentences.length === 0) return;
+      window.speechSynthesis.cancel();
+
+      const text = sentences[currentSentenceIndex].content;
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+      currentUtterance.rate = playbackRate;
+
+      if (selectedVoice) {
+        currentUtterance.voice = selectedVoice;
+      }
+
+      currentUtterance.onstart = () => {
+        isPlaying = true;
+        updatePlayerUI(true);
+        document.getElementById('playback-status-badge').textContent = `再生中 (${playbackRate}x)`;
+      };
+
+      currentUtterance.onend = () => {
+        const isRepeat = document.getElementById('single-repeat-toggle').checked;
+        if (isRepeat) {
+          setTimeout(() => {
+            if (isPlaying) playCurrentSentence();
+          }, 400);
+        } else {
+          if (currentSentenceIndex < sentences.length - 1) {
+            currentSentenceIndex++;
+            highlightActiveSentence();
+            updateSentenceCounter();
+            playCurrentSentence();
+          } else {
+            stopPlayback();
+            document.getElementById('playback-status-badge').textContent = '再生完了';
+          }
+        }
+      };
+
+      currentUtterance.onerror = (e) => {
+        console.warn('SpeechSynthesis error:', e);
+        stopPlayback();
+      };
+
+      window.speechSynthesis.speak(currentUtterance);
+    }
+
+    function stopPlayback() {
+      window.speechSynthesis.cancel();
+      isPlaying = false;
+      updatePlayerUI(false);
+      document.getElementById('playback-status-badge').textContent = '一時停止中';
+    }
+
+    function restartSentence() {
+      playCurrentSentence();
+    }
+
+    function updatePlayerUI(playing) {
+      const playIcon = document.getElementById('play-icon');
+      const pauseIcon = document.getElementById('pause-icon');
+      if (playing) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+    }
+
+    function jumpSentence(direction) {
+      const nextIdx = currentSentenceIndex + direction;
+      if (nextIdx >= 0 && nextIdx < sentences.length) {
+        selectAndPlaySentence(nextIdx);
+      }
+    }
+
+    function seekBySeconds(seconds) {
+      if (sentences.length === 0) return;
+      if (seconds === -1 || seconds === 1) {
+        if (seconds === -1) {
+          restartSentence();
+          showToast('1秒巻き戻し (先頭リプレイ)');
+        } else {
+          if (currentSentenceIndex < sentences.length - 1) {
+            jumpSentence(1);
+            showToast('1秒送り (次の文へ)');
+          }
+        }
+      } else if (Math.abs(seconds) === 5) {
+        const delta = seconds > 0 ? 1 : -1;
+        jumpSentence(delta);
+        showToast(`${seconds > 0 ? '+5' : '-5'}秒スキップ`);
+      } else if (Math.abs(seconds) === 10) {
+        const delta = seconds > 0 ? 2 : -2;
+        const target = Math.max(0, Math.min(sentences.length - 1, currentSentenceIndex + delta));
+        selectAndPlaySentence(target);
+        showToast(`${seconds > 0 ? '+10' : '-10'}秒スキップ`);
+      }
+    }
+
+    function setPlaybackRate(rate) {
+      playbackRate = rate;
+      document.getElementById('rate-indicator').textContent = `${rate}x`;
+      
+      document.querySelectorAll('.rate-btn').forEach(btn => {
+        if (parseFloat(btn.textContent) === rate) {
+          btn.className = 'rate-btn flex-1 py-1 text-xs rounded bg-rose-600 text-white font-semibold';
+        } else {
+          btn.className = 'rate-btn flex-1 py-1 text-xs rounded bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+
+      if (isPlaying) {
+        playCurrentSentence();
+      }
+    }
+
+    function handleSeekClick(e) {
+      const bar = document.getElementById('player-progress-bar');
+      const rect = bar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+      const targetIndex = Math.floor(ratio * sentences.length);
+      selectAndPlaySentence(Math.min(targetIndex, sentences.length - 1));
+    }
+
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+
+      if (speechRecognizer) {
+        try { speechRecognizer.abort(); } catch (e) {}
+      }
+
+      speechRecognizer = new SpeechRecognition();
+      speechRecognizer.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+      speechRecognizer.continuous = true;
+      speechRecognizer.interimResults = true;
+
+      speechRecognizer.onstart = () => {
+        document.getElementById('transcription-indicator').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-ping';
+      };
+
+      speechRecognizer.onresult = (event) => {
+        let interim = '';
+        let final = '';
+
+        for (let i = 0; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        liveTranscription = final + interim;
+        const box = document.getElementById('live-transcription-text');
+        box.textContent = liveTranscription || '発話内容がここにリアルタイムで表示されます...';
+        box.classList.remove('italic', 'text-slate-400');
+        box.classList.add('text-slate-900');
+      };
+
+      speechRecognizer.onerror = (event) => {
+        console.warn('SpeechRecognition error:', event.error);
+      };
+
+      speechRecognizer.onend = () => {
+        document.getElementById('transcription-indicator').className = 'w-2 h-2 rounded-full bg-slate-300';
+      };
+    }
+
+    async function toggleRecording() {
+      if (isRecording) {
+        stopRecordingSession();
+      } else {
+        await startRecordingSession();
+      }
+    }
+
+    async function startRecordingSession() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          saveRecordedSession(audioUrl, audioBlob, liveTranscription);
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+
+        if (speechRecognizer) {
+          liveTranscription = '';
+          document.getElementById('live-transcription-text').textContent = '音声を認識中...';
+          try { speechRecognizer.start(); } catch (e) {}
+        }
+
+        timerRemaining = timerDuration;
+        updateTimerDisplay(timerRemaining);
+        startTimerCountdown();
+
+        document.getElementById('mic-icon').classList.add('hidden');
+        document.getElementById('stop-icon').classList.remove('hidden');
+        document.getElementById('toggle-record-btn').classList.replace('bg-rose-600', 'bg-slate-900');
+        document.getElementById('rec-pulse-effect').classList.remove('hidden');
+        document.getElementById('record-status-label').textContent = '録音中... (終了ボタンまたは時間切れで停止)';
+        document.getElementById('record-status-label').className = 'mt-3 text-xs font-semibold text-rose-600 animate-pulse';
+
+      } catch (err) {
+        showToast('マイクの使用許可が得られませんでした: ' + err.message, 'error');
+      }
+    }
+
+    function stopRecordingSession() {
+      if (!isRecording) return;
+      isRecording = false;
+
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+
+      if (speechRecognizer) {
+        try { speechRecognizer.stop(); } catch (e) {}
+      }
+
+      clearInterval(timerInterval);
+
+      document.getElementById('mic-icon').classList.remove('hidden');
+      document.getElementById('stop-icon').classList.add('hidden');
+      document.getElementById('toggle-record-btn').classList.replace('bg-slate-900', 'bg-rose-600');
+      document.getElementById('rec-pulse-effect').classList.add('hidden');
+      document.getElementById('record-status-label').textContent = '録音が完了しました！';
+      document.getElementById('record-status-label').className = 'mt-3 text-xs font-semibold text-emerald-600';
+
+      showToast('録音と文字起こしを保存しました');
+    }
+
+    function startTimerCountdown() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timerRemaining--;
+        updateTimerDisplay(timerRemaining);
+
+        if (timerRemaining <= 0) {
+          stopRecordingSession();
+        }
+      }, 1000);
+    }
+
+    function setTimerLimit(seconds) {
+      if (isRecording) {
+        showToast('録音中はタイマーを変更できません', 'error');
+        return;
+      }
+      timerDuration = seconds;
+      timerRemaining = seconds;
+      updateTimerDisplay(seconds);
+
+      document.querySelectorAll('.timer-chip').forEach(btn => {
+        if (parseInt(btn.textContent) === seconds) {
+          btn.className = 'timer-chip px-2.5 py-1 text-xs rounded-lg font-bold bg-rose-600 text-white shadow-sm';
+        } else {
+          btn.className = 'timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+    }
+
+    function updateTimerDisplay(remaining) {
+      document.getElementById('timer-countdown-text').textContent = remaining;
+      const totalCircumference = 326.72;
+      const progress = remaining / timerDuration;
+      const offset = totalCircumference * (1 - progress);
+      document.getElementById('timer-progress-ring').style.strokeDashoffset = offset;
+    }
+
+    function saveRecordedSession(audioUrl, blob, transcriptionText) {
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+      
+      let target = '';
+      if (speakingSentences.length > 0 && speakingSentences[activeSpeakingSentenceIndex]) {
+        target = speakingSentences[activeSpeakingSentenceIndex].content;
+      } else {
+        target = document.getElementById('speaking-target-text').value.trim();
+      }
+
+      const recordItem = {
+        id: 'rec-' + Date.now(),
+        lang: currentAppLang,
+        time: timeStr,
+        url: audioUrl,
+        blob: blob,
+        duration: timerDuration - timerRemaining,
+        text: transcriptionText || '（文字起こし結果なし）',
+        targetText: target
+      };
+
+      recordedAudios.unshift(recordItem);
+      renderRecordingHistory();
+    }
+
+    function renderRecordingHistory() {
+      const container = document.getElementById('recording-history-list');
+      const badge = document.getElementById('recording-count-badge');
+      badge.textContent = `${recordedAudios.length} 件`;
+
+      if (recordedAudios.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-xs text-slate-400">
+            まだ録音がありません。「録音開始」を押して練習を始めましょう！
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      recordedAudios.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-colors';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <div class="flex items-center gap-1.5 font-semibold text-slate-700">
+              <span>#${recordedAudios.length - index} (${item.time})</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${item.lang === 'zh' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'}">${item.lang === 'zh' ? '🇨🇳 ZH' : '🇬🇧 EN'}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 bg-slate-200 rounded text-[10px] font-mono">${item.duration}秒</span>
+              <a href="${item.url}" download="${item.lang}_practice_${item.time.replace(/:/g, '')}.webm" class="text-rose-600 hover:underline text-[11px]">DL</a>
+            </div>
+          </div>
+          <audio controls src="${item.url}" class="w-full h-8 mt-1"></audio>
+          <div class="text-xs bg-white p-2 rounded-lg border border-slate-100">
+            <span class="text-slate-400 font-medium text-[11px] block mb-0.5">文字起こし結果:</span>
+            <p class="${item.lang === 'zh' ? 'font-cn' : 'font-sans'} text-slate-800">${escapeHtml(item.text)}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCatalogGrid(filterTag) {
+      currentCatalogFilter = filterTag;
+      const grid = document.getElementById('catalog-card-grid');
+      grid.innerHTML = '';
+
+      const filtered = filterTag === 'ALL' 
+        ? catalog 
+        : catalog.filter(item => item.tag === filterTag);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-sm text-slate-400">該当する教材がありません。</div>';
+        return;
+      }
+
+      const isEnMode = currentAppLang === 'en';
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `bg-white border rounded-xl p-5 transition-all flex flex-col justify-between ${
+          isEnMode ? 'border-slate-200 hover:border-blue-400 hover:shadow-md' : 'border-slate-200 hover:border-rose-300 hover:shadow-md'
+        }`;
+        
+        const displayTitle = isEnMode ? (item.titleEn || item.title) : item.title;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                  isEnMode ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+                }">${escapeHtml(item.tag || '一般')}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                  isEnMode ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'
+                }">${isEnMode ? '🇬🇧 EN' : '🇨🇳 ZH'}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <button onclick="openEditArticleModal('${item.id}', event)" title="編集" class="text-slate-400 hover:text-amber-600 p-1 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+                <button onclick="deleteArticle('${item.id}', event)" title="削除" class="text-slate-400 hover:text-rose-500 p-1 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+            </div>
+            <h3 class="font-bold text-slate-900 text-sm mb-2.5 line-clamp-1">${escapeHtml(displayTitle)}</h3>
+            
+            <div class="space-y-1.5 mb-3">
+              ${isEnMode ? `
+                <div class="p-2.5 bg-slate-50 rounded-lg text-xs border border-slate-100">
+                  <span class="text-[10px] font-bold text-blue-600 block mb-1">🇬🇧 English:</span>
+                  <p class="font-sans text-slate-700 line-clamp-3 leading-relaxed">${escapeHtml(item.english || '')}</p>
+                </div>
+              ` : `
+                <div class="p-2.5 bg-slate-50 rounded-lg text-xs border border-slate-100">
+                  <span class="text-[10px] font-bold text-rose-600 block mb-1">🇨🇳 中文:</span>
+                  <p class="font-cn text-slate-700 line-clamp-3 leading-relaxed">${escapeHtml(item.chinese)}</p>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button onclick="selectArticleForListening('${item.id}')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors text-center ${
+              isEnMode ? 'bg-blue-50 hover:bg-blue-100 text-blue-700' : 'bg-rose-50 hover:bg-rose-100 text-rose-700'
+            }">
+              リスニングで聴く
+            </button>
+            <button onclick="selectArticleForSpeaking('${item.id}')" class="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors">
+              スピーキング
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterCatalog(tag) {
+      document.querySelectorAll('.catalog-filter-btn').forEach(btn => {
+        if (btn.textContent.trim() === (tag === 'ALL' ? 'すべて' : tag)) {
+          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+        } else {
+          btn.className = 'catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+      renderCatalogGrid(tag);
+    }
+
+    function selectArticleForListening(id) {
+      const item = catalog.find(x => x.id === id);
+      if (item) {
+        loadActiveArticle(item);
+        switchTab('listening');
+        showToast(`「${item.title}」を読み込みました`);
+      }
+    }
+
+    function selectArticleForSpeaking(id) {
+      const item = catalog.find(x => x.id === id);
+      if (item) {
+        setSpeakingSentencesFromArticle(item);
+        switchTab('speaking');
+        showToast(`「${item.title}」をスピーキング教材に設定しました`);
+      }
+    }
+
+    function sendActiveToSpeaking() {
+      if (sentences.length > 0) {
+        speakingSentences = [...sentences];
+        activeSpeakingSentenceIndex = currentSentenceIndex;
+        const fullText = currentArticle 
+          ? (currentAppLang === 'zh' ? currentArticle.chinese : currentArticle.english) 
+          : sentences.map(s => s.content).join(' ');
+        document.getElementById('speaking-target-text').value = fullText;
+        renderSpeakingSentencesList();
+        updateSpeakingFocusedDisplay();
+        switchTab('speaking');
+        showToast('選択中の文章をスピーキング練習に連携しました');
+      }
+    }
+
+    function deleteArticle(id, event) {
+      event.stopPropagation();
+      catalog = catalog.filter(x => x.id !== id);
+      saveCatalogToStorage();
+      renderCatalogGrid('ALL');
+      showToast('教材をカタログから削除しました');
+    }
+
+    function exportCatalogData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalog, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `lingua_catalog_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('教材データを書き出しました');
+    }
+
+    function importCatalogData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            catalog = imported;
+            saveCatalogToStorage();
+            renderCatalogGrid('ALL');
+            showToast(`${imported.length}件の教材を読み込みました`);
+          } else {
+            showToast('JSONフォーマットが正しくありません', 'error');
+          }
+        } catch (err) {
+          showToast('JSONの読み込みに失敗しました', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function openPasteModal() {
+      editingArticleId = null;
+      document.getElementById('modal-form-title').textContent = '文章を直接ペーストして即学習';
+      document.getElementById('modal-submit-btn').textContent = '読み込む';
+      document.getElementById('paste-save-label').classList.remove('hidden');
+      document.getElementById('paste-modal').classList.remove('hidden');
+    }
+
+    function closePasteModal() {
+      editingArticleId = null;
+      document.getElementById('paste-modal').classList.add('hidden');
+    }
+
+    function openAddArticleModal() {
+      editingArticleId = null;
+      document.getElementById('modal-form-title').textContent = '新規教材を追加';
+      document.getElementById('modal-submit-btn').textContent = '教材を追加して保存';
+      document.getElementById('paste-input-title').value = '';
+      document.getElementById('paste-input-title-en').value = '';
+      document.getElementById('paste-input-tag').value = '日常会話';
+      document.getElementById('paste-input-chinese').value = '';
+      document.getElementById('paste-input-english').value = '';
+      document.getElementById('paste-input-translation').value = '';
+      document.getElementById('paste-save-label').classList.add('hidden');
+      document.getElementById('paste-save-to-catalog').checked = true;
+      document.getElementById('paste-modal').classList.remove('hidden');
+    }
+
+    function openEditArticleModal(id, event) {
+      if (event) event.stopPropagation();
+      const article = catalog.find(item => item.id === id);
+      if (!article) return;
+
+      editingArticleId = id;
+      document.getElementById('modal-form-title').textContent = '教材の編集';
+      document.getElementById('modal-submit-btn').textContent = '更新を保存';
+
+      document.getElementById('paste-input-title').value = article.title || '';
+      document.getElementById('paste-input-title-en').value = article.titleEn || article.title || '';
+      document.getElementById('paste-input-tag').value = article.tag || '日常会話';
+      document.getElementById('paste-input-chinese').value = article.chinese || '';
+      document.getElementById('paste-input-english').value = article.english || '';
+      document.getElementById('paste-input-translation').value = article.translation || '';
+
+      document.getElementById('paste-save-label').classList.add('hidden');
+      document.getElementById('paste-modal').classList.remove('hidden');
+    }
+
+    function applyPastedText() {
+      const titleZh = document.getElementById('paste-input-title').value.trim() || '新規登録教材';
+      const titleEn = document.getElementById('paste-input-title-en').value.trim() || titleZh;
+      const tag = document.getElementById('paste-input-tag').value.trim() || '日常会話';
+      const cn = document.getElementById('paste-input-chinese').value.trim();
+      const en = document.getElementById('paste-input-english').value.trim();
+      const trans = document.getElementById('paste-input-translation').value.trim();
+
+      if (!cn || !en) {
+        showToast('中国語と英語の両方の文章を入力してください', 'error');
+        return;
+      }
+
+      // Check if we are updating an existing article
+      if (editingArticleId) {
+        const index = catalog.findIndex(item => item.id === editingArticleId);
+        if (index !== -1) {
+          catalog[index].title = titleZh;
+          catalog[index].titleEn = titleEn;
+          catalog[index].tag = tag;
+          catalog[index].chinese = cn;
+          catalog[index].english = en;
+          catalog[index].translation = trans;
+          catalog[index].updatedAt = new Date().toISOString().slice(0, 10);
+
+          saveCatalogToStorage();
+          renderCatalogGrid(currentCatalogFilter);
+
+          // If currently loaded in listening or speaking, reload it
+          if (currentArticle && currentArticle.id === editingArticleId) {
+            loadActiveArticle(catalog[index]);
+          }
+
+          closePasteModal();
+          showToast(`教材「${titleZh}」を更新しました`);
+          return;
+        }
+      }
+
+      // Creating a new article
+      const saveCatalog = document.getElementById('paste-save-to-catalog').checked;
+      const newArticle = {
+        id: 'user-' + Date.now(),
+        title: titleZh,
+        titleEn: titleEn,
+        tag: tag,
+        chinese: cn,
+        english: en,
+        translation: trans,
+        createdAt: new Date().toISOString().slice(0, 10)
+      };
+
+      if (saveCatalog) {
+        catalog.unshift(newArticle);
+        saveCatalogToStorage();
+        renderCatalogGrid(currentCatalogFilter);
+      }
+
+      loadActiveArticle(newArticle);
+      closePasteModal();
+      switchTab('listening');
+      showToast('教材を読み込みました');
+    }
+
+    function switchTab(tab) {
+      const views = ['listening', 'speaking', 'catalog'];
+      views.forEach(v => {
+        const viewEl = document.getElementById(`view-${v}`);
+        const btnEl = document.getElementById(`tab-btn-${v}`);
+        if (v === tab) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = 'tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 bg-rose-50 text-rose-700 shadow-sm border border-rose-200';
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = 'tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        }
+      });
+    }
+
+    function toggleTranslationVisibility() {
+      const show = document.getElementById('toggle-translation').checked;
+      document.querySelectorAll('.sentence-trans').forEach(el => {
+        if (show) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+    }
+
+    function changeFontSize(delta) {
+      fontSizeLevel = Math.max(-1, Math.min(3, fontSizeLevel + delta));
+      const flow = document.getElementById('listening-text-flow');
+      flow.classList.remove('text-sm', 'text-base', 'text-lg', 'text-xl');
+      if (fontSizeLevel === -1) flow.classList.add('text-sm');
+      else if (fontSizeLevel === 0) flow.classList.add('text-base');
+      else if (fontSizeLevel === 1) flow.classList.add('text-lg');
+      else if (fontSizeLevel >= 2) flow.classList.add('text-xl');
+    }
+
+    function setupKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          if (e.shiftKey) seekBySeconds(-5);
+          else seekBySeconds(-1);
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          if (e.shiftKey) seekBySeconds(5);
+          else seekBySeconds(1);
+        } else if (e.code === 'ArrowUp') {
+          e.preventDefault();
+          jumpSentence(-1);
+        } else if (e.code === 'ArrowDown') {
+          e.preventDefault();
+          jumpSentence(1);
+        }
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColor = type === 'error' ? 'bg-rose-900 text-white' : 'bg-slate-900 text-white';
+      toast.className = `${bgColor} text-xs px-4 py-2.5 rounded-xl shadow-lg border border-slate-700/50 flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0`;
+      
+      toast.innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full ${type === 'error' ? 'bg-rose-400' : 'bg-emerald-400'}"></span>
+        <span>${escapeHtml(message)}</span>
+      `;
+      
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 2600);
+      }, 2600);
+    }
+
+    function copyTranscription() {
+      if (!liveTranscription) {
+        showToast('コピーする文字起こしテキストがありません', 'error');
+        return;
+      }
+      const dummy = document.createElement('textarea');
+      dummy.value = liveTranscription;
+      document.body.appendChild(dummy);
+      dummy.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummy);
+      showToast('クリップボードにコピーしました');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[m]));
+    }
+  </script>
+</body>
+</html>

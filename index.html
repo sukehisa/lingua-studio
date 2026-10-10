@@ -131,7 +131,7 @@
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player {
-        padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
       }
       #mobile-mini-player {
         bottom: calc(4rem + env(safe-area-inset-bottom));
@@ -141,7 +141,7 @@
         bottom: calc(5rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player #toast-container {
-        bottom: calc(8.75rem + env(safe-area-inset-bottom));
+        bottom: calc(9.5rem + env(safe-area-inset-bottom));
       }
     }
   </style>
@@ -221,46 +221,65 @@
       <div id="mini-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
     </div>
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2">
-      <!-- Top info bar: Counter & Clickable Speed Button -->
-      <div class="flex items-center justify-between text-[11px] px-1 mb-1">
-        <span id="mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide">0 / 0 句</span>
-        <button id="mini-rate-btn" onclick="cyclePlaybackRate()" aria-label="再生速度を変更 (タップで切替)" class="font-mono text-[11px] text-rose-300 hover:text-rose-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all">
+      <!-- Top info & seeking bar: Counter, -1s -5s +5s +1s, and Speed Button -->
+      <div class="flex items-center justify-between gap-1 text-[11px] px-0.5 mb-1.5">
+        <!-- Sentence Counter -->
+        <span id="mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide shrink-0">0 / 0 句</span>
+
+        <!-- Seeking buttons: -1s -5s +5s +1s -->
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="seekBySeconds(-1)" aria-label="1秒戻る" title="1秒戻る" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            -1s
+          </button>
+          <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" title="5秒戻る" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            -5s
+          </button>
+          <button onclick="seekBySeconds(5)" aria-label="5秒進む" title="5秒進む" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            +5s
+          </button>
+          <button onclick="seekBySeconds(1)" aria-label="1秒進む" title="1秒進む" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            +1s
+          </button>
+        </div>
+
+        <!-- Speed Button -->
+        <button id="mini-rate-btn" onclick="cyclePlaybackRate()" aria-label="再生速度を変更 (タップで切替)" class="font-mono text-[11px] text-rose-300 hover:text-rose-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
           <span class="text-slate-400 text-[10px]">速度:</span>
           <span id="mini-rate-indicator" class="font-bold text-rose-400">1.0x</span>
         </button>
       </div>
 
-      <!-- Controls row: centered play button surrounded by seconds and sentence controls: -1s -5s << ▷ >> +5s +1s -->
-      <div class="flex items-center justify-center gap-1 sm:gap-2">
-        <!-- -1s -->
-        <button onclick="seekBySeconds(-1)" aria-label="1秒戻る" title="1秒戻る" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
-          -1s
-        </button>
-        <!-- -5s -->
-        <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" title="5秒戻る" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
-          -5s
-        </button>
-        <!-- << 前の文 -->
-        <button onclick="jumpSentence(-1)" aria-label="前の文へ" title="前の文へ" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
-        </button>
-        <!-- ▷ 再生 / 一時停止 (中央) -->
-        <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 shrink-0 mx-0.5 transition-transform">
-          <svg id="mini-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="mini-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </button>
-        <!-- >> 次の文 -->
-        <button onclick="jumpSentence(1)" aria-label="次の文へ" title="次の文へ" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-        </button>
-        <!-- +5s -->
-        <button onclick="seekBySeconds(5)" aria-label="5秒進む" title="5秒進む" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
-          +5s
-        </button>
-        <!-- +1s -->
-        <button onclick="seekBySeconds(1)" aria-label="1秒進む" title="1秒進む" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
-          +1s
-        </button>
+      <!-- Main Controls Row: <(同じ句をはじめから再生) << ▷ (中央) >> -->
+      <div class="flex items-center justify-between px-1 sm:px-6">
+        <!-- Left group: < (同じ句をはじめから再生) & << (前の文へ) -->
+        <div class="flex-1 flex items-center justify-end gap-2 sm:gap-3">
+          <!-- < 同じ句をはじめから再生 -->
+          <button onclick="restartSentence()" aria-label="同じ句をはじめから再生" title="同じ句をはじめから再生" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <!-- << 前の文へ -->
+          <button onclick="jumpSentence(-1)" aria-label="前の文へ" title="前の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+          </button>
+        </div>
+
+        <!-- Center: ▷ 再生 / 一時停止 -->
+        <div class="shrink-0 px-3 sm:px-5">
+          <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 transition-transform">
+            <svg id="mini-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="mini-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+        </div>
+
+        <!-- Right group: >> 次の文へ (balanced with spacer for exact center alignment) -->
+        <div class="flex-1 flex items-center justify-start gap-2 sm:gap-3">
+          <!-- >> 次の文へ -->
+          <button onclick="jumpSentence(1)" aria-label="次の文へ" title="次の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+          </button>
+          <!-- Invisible balancer so ▷ is mathematically centered -->
+          <div class="w-10 h-10 invisible pointer-events-none shrink-0" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1457,7 +1476,7 @@
 
     function restartSentence() {
       playCurrentSentence(0);
-      showToast('文の先頭から再生');
+      showToast('同じ句を最初から再生');
     }
 
     function updatePlayerUI(playing) {

@@ -87,6 +87,45 @@
       border-color: #f87171;
     }
 
+    /* Dynamic font size scaling for listening text flow */
+    #listening-text-flow {
+      --flow-font-size: 1rem;
+      --flow-line-height: 1.7;
+      --flow-trans-size: 0.75rem;
+    }
+    #listening-text-flow.font-size-sm {
+      --flow-font-size: 0.85rem;
+      --flow-line-height: 1.5;
+      --flow-trans-size: 0.7rem;
+    }
+    #listening-text-flow.font-size-base {
+      --flow-font-size: 1rem;
+      --flow-line-height: 1.7;
+      --flow-trans-size: 0.75rem;
+    }
+    #listening-text-flow.font-size-lg {
+      --flow-font-size: 1.25rem;
+      --flow-line-height: 1.8;
+      --flow-trans-size: 0.875rem;
+    }
+    #listening-text-flow.font-size-xl {
+      --flow-font-size: 1.5rem;
+      --flow-line-height: 1.9;
+      --flow-trans-size: 1rem;
+    }
+    #listening-text-flow.font-size-2xl {
+      --flow-font-size: 1.8rem;
+      --flow-line-height: 2.0;
+      --flow-trans-size: 1.15rem;
+    }
+    #listening-text-flow .sentence-main {
+      font-size: var(--flow-font-size);
+      line-height: var(--flow-line-height);
+    }
+    #listening-text-flow .sentence-trans {
+      font-size: var(--flow-trans-size);
+    }
+
     /* ---------- Mobile support ---------- */
     html {
       -webkit-text-size-adjust: 100%;
@@ -353,7 +392,7 @@
             </div>
 
             <!-- Chinese Sentences Container -->
-            <div id="listening-text-flow" class="space-y-3 max-h-[60vh] lg:max-h-[380px] overflow-y-auto overscroll-contain pr-1 sm:pr-2 text-base leading-relaxed">
+            <div id="listening-text-flow" class="space-y-3 max-h-[60vh] lg:max-h-[380px] overflow-y-auto overscroll-contain pr-1 sm:pr-2 font-size-base">
               <!-- Dynamically populated sentences -->
             </div>
           </div>
@@ -363,7 +402,9 @@
             <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
             <div class="hidden md:flex items-center gap-2">
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Space</span> 再生/一時停止
-              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">← / →</span> 1秒/5秒移動
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">←</span> 句の先頭から再生
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Shift+← / →</span> 1秒戻す/進む
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">→</span> 5秒進む
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">↑ / ↓</span> 前後文スキップ
             </div>
             <div id="playback-status-badge" class="font-medium text-slate-500">停止中</div>
@@ -385,22 +426,27 @@
                 <div id="player-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
               </div>
 
-              <!-- Primary Play/Pause Controls -->
-              <div class="flex items-center justify-center gap-4 mb-6">
-                <!-- Jump Prev Sentence -->
-                <button onclick="jumpSentence(-1)" title="前の文へ (↑)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+              <!-- Primary Play/Pause Controls: <(同じ句をはじめから再生) << ▷ >> -->
+              <div class="flex items-center justify-center gap-3 mb-6">
+                <!-- Restart Current Sentence (<) -->
+                <button onclick="restartSentence()" title="同じ句を最初から再生 (←)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                 </button>
 
-                <!-- Big Play/Pause Button -->
-                <button id="main-play-btn" onclick="togglePlay()" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-900/40 transform active:scale-95 transition-all">
+                <!-- Jump Prev Sentence (<<) -->
+                <button onclick="jumpSentence(-1)" title="前の文へ (↑)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                </button>
+
+                <!-- Big Play/Pause Button (▷) -->
+                <button id="main-play-btn" onclick="togglePlay()" title="再生/一時停止 (Space)" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-900/40 transform active:scale-95 transition-all">
                   <svg id="play-icon" class="w-8 h-8 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   <svg id="pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
 
-                <!-- Jump Next Sentence -->
-                <button onclick="jumpSentence(1)" title="次の文へ (↓)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                <!-- Jump Next Sentence (>>) -->
+                <button onclick="jumpSentence(1)" title="次の文へ (↓)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                 </button>
               </div>
 
@@ -755,6 +801,13 @@
       setupSpeechRecognition();
       setupKeyboardShortcuts();
       updateTimerDisplay(timerDuration);
+      try {
+        const savedFs = localStorage.getItem('lingua_font_size_level');
+        if (savedFs !== null) {
+          fontSizeLevel = parseInt(savedFs, 10);
+        }
+      } catch (_) {}
+      changeFontSize(0);
     });
 
     /**
@@ -1084,11 +1137,11 @@
         item.onclick = () => selectAndPlaySentence(index);
 
         const mainPara = document.createElement('div');
-        mainPara.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} font-medium text-slate-800 tracking-wide text-base leading-relaxed`;
+        mainPara.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} font-medium text-slate-800 tracking-wide sentence-main`;
         mainPara.innerHTML = currentAppLang === 'zh' ? renderPinyinRuby(sentence.content) : escapeHtml(sentence.content);
 
         const jpPara = document.createElement('p');
-        jpPara.className = 'sentence-trans text-xs text-slate-500 mt-1';
+        jpPara.className = 'sentence-trans text-slate-500 mt-1';
         jpPara.textContent = sentence.jp || '';
         if (!document.getElementById('toggle-translation').checked) {
           jpPara.classList.add('hidden');
@@ -2101,11 +2154,19 @@
     function changeFontSize(delta) {
       fontSizeLevel = Math.max(-1, Math.min(3, fontSizeLevel + delta));
       const flow = document.getElementById('listening-text-flow');
-      flow.classList.remove('text-sm', 'text-base', 'text-lg', 'text-xl');
-      if (fontSizeLevel === -1) flow.classList.add('text-sm');
-      else if (fontSizeLevel === 0) flow.classList.add('text-base');
-      else if (fontSizeLevel === 1) flow.classList.add('text-lg');
-      else if (fontSizeLevel >= 2) flow.classList.add('text-xl');
+      if (!flow) return;
+      flow.classList.remove('font-size-sm', 'font-size-base', 'font-size-lg', 'font-size-xl', 'font-size-2xl');
+      const classes = {
+        [-1]: 'font-size-sm',
+        0: 'font-size-base',
+        1: 'font-size-lg',
+        2: 'font-size-xl',
+        3: 'font-size-2xl'
+      };
+      flow.classList.add(classes[fontSizeLevel] || 'font-size-base');
+      try {
+        localStorage.setItem('lingua_font_size_level', String(fontSizeLevel));
+      } catch (_) {}
     }
 
     function setupKeyboardShortcuts() {
@@ -2117,12 +2178,18 @@
           togglePlay();
         } else if (e.code === 'ArrowLeft') {
           e.preventDefault();
-          if (e.shiftKey) seekBySeconds(-5);
-          else seekBySeconds(-1);
+          if (e.shiftKey) {
+            seekBySeconds(-1);
+          } else {
+            restartSentence();
+          }
         } else if (e.code === 'ArrowRight') {
           e.preventDefault();
-          if (e.shiftKey) seekBySeconds(5);
-          else seekBySeconds(1);
+          if (e.shiftKey) {
+            seekBySeconds(1);
+          } else {
+            seekBySeconds(5);
+          }
         } else if (e.code === 'ArrowUp') {
           e.preventDefault();
           jumpSentence(-1);

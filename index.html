@@ -2,7 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LinguaStudio">
   <title>LinguaStudio | 中国語 & 英語学習スタジオ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,38 +86,140 @@
       background-color: #fef2f2;
       border-color: #f87171;
     }
+
+    /* Dynamic font size scaling for listening text flow */
+    #listening-text-flow {
+      --flow-font-size: 1rem;
+      --flow-line-height: 1.7;
+      --flow-trans-size: 0.75rem;
+    }
+    #listening-text-flow.font-size-sm {
+      --flow-font-size: 0.85rem;
+      --flow-line-height: 1.5;
+      --flow-trans-size: 0.7rem;
+    }
+    #listening-text-flow.font-size-base {
+      --flow-font-size: 1rem;
+      --flow-line-height: 1.7;
+      --flow-trans-size: 0.75rem;
+    }
+    #listening-text-flow.font-size-lg {
+      --flow-font-size: 1.25rem;
+      --flow-line-height: 1.8;
+      --flow-trans-size: 0.875rem;
+    }
+    #listening-text-flow.font-size-xl {
+      --flow-font-size: 1.5rem;
+      --flow-line-height: 1.9;
+      --flow-trans-size: 1rem;
+    }
+    #listening-text-flow.font-size-2xl {
+      --flow-font-size: 1.8rem;
+      --flow-line-height: 2.0;
+      --flow-trans-size: 1.15rem;
+    }
+    #listening-text-flow .sentence-main {
+      font-size: var(--flow-font-size);
+      line-height: var(--flow-line-height);
+    }
+    #listening-text-flow .sentence-trans {
+      font-size: var(--flow-trans-size);
+    }
+
+    /* ---------- Mobile support ---------- */
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+    button, a, label, select, [onclick] {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* iOS Safari zooms in when focusing inputs smaller than 16px */
+    @media (max-width: 767px) {
+      input[type="text"], textarea, select {
+        font-size: 16px !important;
+      }
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      scrollbar-width: none;
+    }
+    /* Mobile bottom offset: bottom nav (< md) + mini player on listening tab (< lg) */
+    #mobile-mini-player {
+      bottom: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    body:not(.has-mini-player) #mobile-mini-player {
+      display: none;
+    }
+    @media (max-width: 1023px) {
+      body.has-mini-player {
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-player #toast-container {
+        bottom: calc(4.75rem + env(safe-area-inset-bottom));
+      }
+    }
+    @media (max-width: 767px) {
+      body {
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-player {
+        padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+      }
+      #mobile-mini-player {
+        bottom: calc(4rem + env(safe-area-inset-bottom));
+        padding-bottom: 0;
+      }
+      #toast-container {
+        bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-player #toast-container {
+        bottom: calc(9.5rem + env(safe-area-inset-bottom));
+      }
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
+<body class="has-mini-player bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
 
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/90">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-3">
-        <div id="brand-logo-badge" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-rose-200 transition-all">
-          华
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/90" style="padding-top: env(safe-area-inset-top);">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div class="scale-90 sm:scale-100 origin-left shrink-0">
+          <div id="brand-logo-badge" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-rose-200 transition-all">
+            华
+          </div>
         </div>
-        <div>
-          <h1 class="font-bold text-lg text-slate-900 leading-tight tracking-tight flex items-center gap-2">
-            LinguaStudio <span id="brand-lang-badge" class="text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-600 rounded-full border border-rose-200">中国語モード</span>
+        <div class="min-w-0">
+          <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight tracking-tight flex items-center gap-2">
+            <span class="truncate">LinguaStudio</span>
+            <span class="hidden lg:inline-flex"><span id="brand-lang-badge" class="text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-600 rounded-full border border-rose-200">中国語モード</span></span>
           </h1>
-          <p class="text-xs text-slate-500 hidden sm:block">中国語 & 英語 リスニング・スピーキング集中特訓</p>
+          <p class="text-xs text-slate-500 hidden lg:block">中国語 & 英語 リスニング・スピーキング集中特訓</p>
         </div>
       </div>
 
       <!-- Top Level Language Switcher -->
-      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner shrink-0">
         <button id="lang-btn-zh" onclick="setAppLanguage('zh')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-rose-600 shadow-sm">
           <span>🇨🇳</span>
-          <span>中国語 (ZH)</span>
+          <span class="hidden lg:inline">中国語 (ZH)</span>
+          <span class="lg:hidden">ZH</span>
         </button>
         <button id="lang-btn-en" onclick="setAppLanguage('en')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
           <span>🇬🇧</span>
-          <span>英語 (EN)</span>
+          <span class="hidden lg:inline">英語 (EN)</span>
+          <span class="lg:hidden">EN</span>
         </button>
       </div>
 
-      <!-- Navigation tabs -->
-      <nav class="flex items-center gap-1 sm:gap-2">
+      <!-- Navigation tabs (tablet / desktop) -->
+      <nav class="hidden md:flex items-center gap-1 sm:gap-2">
         <button id="tab-btn-listening" onclick="switchTab('listening')" class="tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 bg-rose-50 text-rose-700 shadow-sm border border-rose-200">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
           <span>リスニング</span>
@@ -129,14 +236,101 @@
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Navigation tabs (mobile bottom bar; kept outside <header> because its backdrop-filter would trap position:fixed) -->
+  <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] pb-safe">
+    <div class="grid grid-cols-3 h-16">
+      <button id="mtab-btn-listening" onclick="switchTab('listening')" class="mtab-btn flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-rose-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <span>リスニング</span>
+      </button>
+      <button id="mtab-btn-speaking" onclick="switchTab('speaking')" class="mtab-btn flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+        <span>スピーキング</span>
+      </button>
+      <button id="mtab-btn-catalog" onclick="switchTab('catalog')" class="mtab-btn flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <span>教材カタログ</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mini player (listening tab, < lg: the full player sits below the text and is often off-screen) -->
+  <div id="mobile-mini-player" class="lg:hidden fixed inset-x-0 z-30 bg-slate-900/95 backdrop-blur-md text-white border-t border-slate-800 shadow-[0_-4px_14px_rgba(0,0,0,0.15)]">
+    <div class="h-1 bg-slate-700">
+      <div id="mini-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2">
+      <!-- Top info & seeking bar: Counter, -1s -5s +5s +1s, and Speed Button -->
+      <div class="flex items-center justify-between gap-1 text-[11px] px-0.5 mb-1.5">
+        <!-- Sentence Counter -->
+        <span id="mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide shrink-0">0 / 0 句</span>
+
+        <!-- Seeking buttons: -1s -5s +5s +1s -->
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="seekBySeconds(-1)" aria-label="1秒戻る" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            -1s
+          </button>
+          <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            -5s
+          </button>
+          <button onclick="seekBySeconds(5)" aria-label="5秒進む" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            +5s
+          </button>
+          <button onclick="seekBySeconds(1)" aria-label="1秒進む" class="px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 text-slate-300 hover:text-white font-mono text-[11px] font-semibold transition-all">
+            +1s
+          </button>
+        </div>
+
+        <!-- Speed Button -->
+        <button id="mini-rate-btn" onclick="cyclePlaybackRate()" aria-label="再生速度を変更 (タップで切替)" class="font-mono text-[11px] text-rose-300 hover:text-rose-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
+          <span class="text-slate-400 text-[10px]">速度:</span>
+          <span id="mini-rate-indicator" class="font-bold text-rose-400">1.0x</span>
+        </button>
+      </div>
+
+      <!-- Main Controls Row: <(同じ句をはじめから再生) << ▷ (中央) >> -->
+      <div class="flex items-center justify-between px-1 sm:px-6">
+        <!-- Left group: < (同じ句をはじめから再生) & << (前の文へ) -->
+        <div class="flex-1 flex items-center justify-end gap-2 sm:gap-3">
+          <!-- < 同じ句をはじめから再生 -->
+          <button onclick="restartSentence()" aria-label="同じ句をはじめから再生" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <!-- << 前の文へ -->
+          <button onclick="jumpSentence(-1)" aria-label="前の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+          </button>
+        </div>
+
+        <!-- Center: ▷ 再生 / 一時停止 -->
+        <div class="shrink-0 px-3 sm:px-5">
+          <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 transition-transform">
+            <svg id="mini-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="mini-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+        </div>
+
+        <!-- Right group: >> 次の文へ (balanced with spacer for exact center alignment) -->
+        <div class="flex-1 flex items-center justify-start gap-2 sm:gap-3">
+          <!-- >> 次の文へ -->
+          <button onclick="jumpSentence(1)" aria-label="次の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+          </button>
+          <!-- Invisible balancer so ▷ is mathematically centered -->
+          <div class="w-10 h-10 invisible pointer-events-none shrink-0" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
     <!-- LISTENING VIEW -->
-    <div id="view-listening" class="space-y-6">
+    <div id="view-listening" class="space-y-4 sm:space-y-6">
       <!-- Top banner: current selected article info -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-start gap-4">
-          <div class="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 shrink-0">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div class="flex items-start gap-3 sm:gap-4 min-w-0">
+          <div class="hidden sm:block p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 shrink-0">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
           </div>
           <div>
@@ -144,11 +338,12 @@
               <span id="active-article-tag" class="px-2 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700 rounded-md">日常会話</span>
               <span id="active-sentence-counter" class="text-xs text-slate-500 font-medium">文: 0 / 0</span>
             </div>
-            <h2 id="active-article-title" class="text-lg font-bold text-slate-900">咖啡馆点单与闲聊</h2>
+            <h2 id="active-article-title" class="text-base sm:text-lg font-bold text-slate-900 break-words">咖啡馆点单与闲聊</h2>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <!-- Action buttons (Desktop / Tablet only: on mobile they duplicate bottom nav) -->
+        <div class="hidden md:flex items-center gap-2">
           <button onclick="openPasteModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
             テキストを貼付
@@ -164,44 +359,52 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         <!-- Main Text Display Box (Left/Top) -->
-        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between min-h-[420px]">
+        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col justify-between lg:min-h-[420px]">
           <div>
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 text-xs text-slate-500">
-              <span class="flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 句をクリックしてその位置から再生できます
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 pb-3 border-b border-slate-100 mb-4 text-xs text-slate-500">
+              <span class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 句をタップして再生
               </span>
-              <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1.5 cursor-pointer text-xs">
-                  <input type="checkbox" id="toggle-translation" onchange="toggleTranslationVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
-                  訳文を表示
+              <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-2">
+                <!-- ピンイン表示切り替え -->
+                <label id="listening-pinyin-toggle-label" class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                  <input type="checkbox" id="toggle-pinyin" onchange="togglePinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  <span>ピンイン</span>
                 </label>
-                <div class="flex items-center gap-1">
-                  <button onclick="changeFontSize(-1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A-</button>
-                  <button onclick="changeFontSize(1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A+</button>
+                <!-- 訳文表示切り替え -->
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                  <input type="checkbox" id="toggle-translation" onchange="toggleTranslationVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  <span>訳文</span>
+                </label>
+                <!-- 1文リピート再生切り替え -->
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none" title="シャドーイング用リピート再生">
+                  <input type="checkbox" id="single-repeat-toggle" class="rounded text-rose-600 focus:ring-rose-500">
+                  <span>1文リピート</span>
+                </label>
+                <!-- 文字サイズ変更 -->
+                <div class="flex items-center gap-1 pl-1 border-l border-slate-200">
+                  <button onclick="changeFontSize(-1)" title="文字サイズ縮小" class="w-7 h-7 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A-</button>
+                  <button onclick="changeFontSize(1)" title="文字サイズ拡大" class="w-7 h-7 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A+</button>
                 </div>
               </div>
             </div>
 
             <!-- Chinese Sentences Container -->
-            <div id="listening-text-flow" class="space-y-3 max-h-[380px] overflow-y-auto pr-2 text-base leading-relaxed">
+            <div id="listening-text-flow" class="space-y-3 max-h-[60vh] lg:max-h-[380px] overflow-y-auto overscroll-contain pr-1 sm:pr-2 font-size-base">
               <!-- Dynamically populated sentences -->
             </div>
           </div>
 
           <!-- Bottom Shortcut Tip -->
-          <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
-            <div class="flex items-center gap-3">
-              <label id="listening-pinyin-toggle-label" class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
-                <input type="checkbox" id="toggle-pinyin" onchange="togglePinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
-                <span>ピンイン (拼音) を表示</span>
-              </label>
-              <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
-            </div>
-            <div class="flex items-center gap-2">
+          <div class="mt-4 sm:mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+            <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
+            <div class="hidden md:flex items-center gap-2">
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Space</span> 再生/一時停止
-              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">← / →</span> 1秒/5秒移動
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">←</span> 句の先頭から再生
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Shift+← / →</span> 1秒戻す/進む
+              <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">→</span> 5秒進む
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">↑ / ↓</span> 前後文スキップ
             </div>
             <div id="playback-status-badge" class="font-medium text-slate-500">停止中</div>
@@ -211,7 +414,7 @@
         <!-- Audio Player & Controls (Right/Bottom) -->
         <div class="lg:col-span-4 space-y-5">
           <!-- Main Player Box -->
-          <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col justify-between">
+          <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 text-white shadow-xl flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-4">
                 <span id="audio-controller-lang-tag" class="text-xs uppercase tracking-wider font-semibold text-rose-400">ZH Audio Controller</span>
@@ -223,53 +426,28 @@
                 <div id="player-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
               </div>
 
-              <!-- Primary Play/Pause Controls -->
-              <div class="flex items-center justify-center gap-4 mb-6">
-                <!-- Jump Prev Sentence -->
-                <button onclick="jumpSentence(-1)" title="前の文へ (↑)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+              <!-- Primary Play/Pause Controls: <(同じ句をはじめから再生) << ▷ >> -->
+              <div class="flex items-center justify-center gap-3 mb-6">
+                <!-- Restart Current Sentence (<) -->
+                <button onclick="restartSentence()" title="同じ句を最初から再生 (←)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                 </button>
 
-                <!-- Big Play/Pause Button -->
-                <button id="main-play-btn" onclick="togglePlay()" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-900/40 transform active:scale-95 transition-all">
+                <!-- Jump Prev Sentence (<<) -->
+                <button onclick="jumpSentence(-1)" title="前の文へ (↑)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                </button>
+
+                <!-- Big Play/Pause Button (▷) -->
+                <button id="main-play-btn" onclick="togglePlay()" title="再生/一時停止 (Space)" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-900/40 transform active:scale-95 transition-all">
                   <svg id="play-icon" class="w-8 h-8 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   <svg id="pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
 
-                <!-- Jump Next Sentence -->
-                <button onclick="jumpSentence(1)" title="次の文へ (↓)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                <!-- Jump Next Sentence (>>) -->
+                <button onclick="jumpSentence(1)" title="次の文へ (↓)" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors active:scale-95">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                 </button>
-              </div>
-
-              <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60 mb-5">
-                <div class="text-[11px] font-semibold text-slate-400 mb-2 text-center">秒単位スキップ・巻き戻し</div>
-                <div class="grid grid-cols-2 gap-2">
-                  <!-- Rewind buttons -->
-                  <div class="flex items-center justify-center gap-1">
-                    <button onclick="seekBySeconds(-1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -1秒
-                    </button>
-                    <button onclick="seekBySeconds(-5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -5秒
-                    </button>
-                    <button onclick="seekBySeconds(-10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -10秒
-                    </button>
-                  </div>
-                  <!-- Forward buttons -->
-                  <div class="flex items-center justify-center gap-1">
-                    <button onclick="seekBySeconds(1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +1秒
-                    </button>
-                    <button onclick="seekBySeconds(5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +5秒
-                    </button>
-                    <button onclick="seekBySeconds(10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +10秒
-                    </button>
-                  </div>
-                </div>
               </div>
 
               <!-- Speed Controller -->
@@ -288,7 +466,7 @@
               </div>
 
               <!-- Voice Selection -->
-              <div class="space-y-1">
+              <div class="space-y-1 mb-4">
                 <label for="voice-select" class="text-xs text-slate-400">中国語音声 (Voice)</label>
                 <select id="voice-select" onchange="onVoiceChange()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500">
                   <option value="">ブラウザ既定の中国語 (zh-CN)</option>
@@ -296,13 +474,38 @@
               </div>
             </div>
 
-            <!-- Single sentence repeat loop -->
-            <div class="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-              <label class="flex items-center gap-2 cursor-pointer text-slate-300">
-                <input type="checkbox" id="single-repeat-toggle" class="rounded bg-slate-700 text-rose-500 focus:ring-rose-500">
-                1文リピート再生 (シャドーイング用)
-              </label>
-              <button onclick="restartSentence()" class="text-rose-400 hover:text-rose-300 text-xs font-medium">この文を頭出し</button>
+            <!-- Bottom Area: Skip by seconds & Restart current sentence -->
+            <div class="pt-4 mt-2 border-t border-slate-800 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-[11px] font-semibold text-slate-400">秒単位スキップ・巻き戻し</span>
+                <button onclick="restartSentence()" class="text-rose-400 hover:text-rose-300 text-xs font-medium">この文を頭出し</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Rewind buttons -->
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="seekBySeconds(-10)" title="10秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -10s
+                  </button>
+                  <button onclick="seekBySeconds(-5)" title="5秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -5s
+                  </button>
+                  <button onclick="seekBySeconds(-1)" title="1秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -1s
+                  </button>
+                </div>
+                <!-- Forward buttons -->
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="seekBySeconds(1)" title="1秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +1s
+                  </button>
+                  <button onclick="seekBySeconds(5)" title="5秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +5s
+                  </button>
+                  <button onclick="seekBySeconds(10)" title="10秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +10s
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,13 +513,13 @@
     </div>
 
     <!-- SPEAKING VIEW -->
-    <div id="view-speaking" class="space-y-6 hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div id="view-speaking" class="space-y-4 sm:space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
         <!-- Left: Speech Prompt and Target Material -->
         <div class="lg:col-span-6 space-y-5">
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 mb-4">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-200">スピーキング練習文章</span>
                 <span id="speaking-mode-badge" class="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded">文単位リスト形式</span>
@@ -334,13 +537,13 @@
 
             <!-- Sentence List Container for Speaking -->
             <div class="space-y-2">
-              <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>文をクリックして集中練習する対象を選択・お手本音声を再生できます</span>
-                <button onclick="toggleSpeakingEditMode()" id="speaking-mode-toggle-btn" class="text-rose-600 hover:underline">テキスト直接編集</button>
+              <div class="flex items-start justify-between gap-3 text-xs text-slate-500">
+                <span>文をタップ/クリックして集中練習する対象を選択・お手本音声を再生できます</span>
+                <button onclick="toggleSpeakingEditMode()" id="speaking-mode-toggle-btn" class="shrink-0 text-rose-600 hover:underline">テキスト直接編集</button>
               </div>
 
               <!-- Sentence List Mode -->
-              <div id="speaking-sentences-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+              <div id="speaking-sentences-list" class="space-y-2 max-h-[50vh] lg:max-h-[320px] overflow-y-auto overscroll-contain pr-1">
                 <!-- Dynamically populated sentences -->
               </div>
 
@@ -355,7 +558,7 @@
 
             <!-- Current Targeted Sentence Display for Practice -->
             <div id="speaking-focused-card" class="mt-4 p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80">
-              <div class="flex items-center justify-between text-xs mb-1">
+              <div class="flex flex-wrap items-center justify-between gap-2 text-xs mb-1">
                 <span class="font-bold text-amber-800">現在選択中の練習センテンス:</span>
                 <button onclick="playSpeakingTargetVoice()" class="flex items-center gap-1 text-xs text-amber-900 font-medium hover:text-rose-600 transition-colors bg-white px-2 py-0.5 rounded border border-amber-300 shadow-xs">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"></path></svg>
@@ -376,7 +579,7 @@
           </div>
 
           <!-- Recorded Audio List -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
             <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center justify-between">
               <span>録音履歴 (今回のセッション)</span>
               <span id="recording-count-badge" class="text-xs font-normal text-slate-500">0 件</span>
@@ -391,12 +594,12 @@
 
         <!-- Right: Timer & Recorder Card -->
         <div class="lg:col-span-6 space-y-5">
-          <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-8 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
             <!-- Background pulse circle while recording -->
             <div id="rec-pulse-effect" class="absolute w-64 h-64 rounded-full bg-rose-500/10 recording-pulse hidden pointer-events-none"></div>
 
             <!-- Timer Settings (Seconds Selector) -->
-            <div class="w-full flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6 pb-4 border-b border-slate-100">
               <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">制限タイマー設定</span>
               <div class="flex items-center gap-1.5">
                 <button onclick="setTimerLimit(30)" class="timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">30秒</button>
@@ -407,7 +610,7 @@
             </div>
 
             <!-- Circular Progress & Timer Display -->
-            <div class="relative w-48 h-48 flex items-center justify-center my-2">
+            <div class="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center my-2">
               <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                 <circle cx="60" cy="60" r="52" class="stroke-slate-100" stroke-width="8" fill="none" />
                 <circle id="timer-progress-ring" cx="60" cy="60" r="52" class="stroke-rose-600 transition-all duration-200" stroke-width="8" stroke-dasharray="326.72" stroke-dashoffset="0" stroke-linecap="round" fill="none" />
@@ -419,7 +622,7 @@
             </div>
 
             <!-- Big Record Button -->
-            <div class="my-6">
+            <div class="my-4 sm:my-6">
               <button id="toggle-record-btn" onclick="toggleRecording()" class="relative z-10 w-20 h-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-xl shadow-rose-200 active:scale-95 transition-all">
                 <svg id="mic-icon" class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                 <div id="stop-icon" class="w-7 h-7 bg-white rounded-md hidden"></div>
@@ -446,8 +649,8 @@
 
     <!-- CATALOG VIEW -->
     <div id="view-catalog" class="space-y-6 hidden">
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 sm:pb-6 border-b border-slate-100">
           <div>
             <h2 id="catalog-header-title" class="text-xl font-bold text-slate-900">中国語教材カタログ</h2>
             <p id="catalog-header-desc" class="text-xs text-slate-500 mt-1">リスニング・スピーキングでいつでも練習可能な文章ライブラリです</p>
@@ -472,7 +675,7 @@
         </div>
 
         <!-- Filter tags -->
-        <div id="catalog-filter-container" class="flex items-center gap-2 pt-4 pb-2 overflow-x-auto">
+        <div id="catalog-filter-container" class="flex items-center gap-2 pt-4 pb-2 overflow-x-auto no-scrollbar whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
           <button data-tag="ALL" onclick="filterCatalog('ALL')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">すべて</button>
           <button data-tag="HSK4" onclick="filterCatalog('HSK4')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK4級</button>
           <button data-tag="HSK5" onclick="filterCatalog('HSK5')" class="catalog-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">HSK5級</button>
@@ -490,8 +693,8 @@
   </main>
 
   <!-- MODAL: Quick Paste Text -->
-  <div id="paste-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+  <div id="paste-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4 hidden">
+    <div class="bg-white rounded-t-2xl sm:rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto overscroll-contain" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <h3 id="modal-form-title" class="font-bold text-slate-900 text-base">文章を直接ペーストして即学習</h3>
         <button onclick="closePasteModal()" class="text-slate-400 hover:text-slate-600 p-1">
@@ -528,7 +731,7 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
         <label id="paste-save-label" class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
           <input type="checkbox" id="paste-save-to-catalog" class="rounded text-rose-600 focus:ring-rose-500" checked>
           <span>教材カタログにも保存する</span>
@@ -542,7 +745,7 @@
   </div>
 
   <!-- MODAL: Custom Message Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+  <div id="toast-container" class="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 space-y-2 pointer-events-none flex flex-col items-center sm:items-end"></div>
 
   <!-- Externalized Catalog Bundle (Provides offline & file:// fallback support) -->
   <script src="data/catalog.js"></script>
@@ -565,6 +768,11 @@
     let fontSizeLevel = 0; // -1, 0, 1, 2
     let isSingleRepeat = false;
 
+    // Playback seeking state
+    let currentSentenceCharOffset = 0;
+    let sentenceUtteranceBaseOffset = 0;
+    let sentenceStartTime = 0;
+
     let showPinyin = true;
     let showSpeakingPinyin = true;
     let speakingSentences = [];
@@ -582,6 +790,7 @@
     let speechRecognizer = null;
     let liveTranscription = '';
     let editingArticleId = null;
+    let currentTab = 'listening';
 
     document.addEventListener('DOMContentLoaded', async () => {
       await initializeCatalogData();
@@ -592,6 +801,13 @@
       setupSpeechRecognition();
       setupKeyboardShortcuts();
       updateTimerDisplay(timerDuration);
+      try {
+        const savedFs = localStorage.getItem('lingua_font_size_level');
+        if (savedFs !== null) {
+          fontSizeLevel = parseInt(savedFs, 10);
+        }
+      } catch (_) {}
+      changeFontSize(0);
     });
 
     /**
@@ -647,6 +863,7 @@
 
       setupVoiceSynthesis();
       setupSpeechRecognition();
+      switchTab(currentTab); // refresh mobile nav accent color
 
       if (currentArticle) {
         loadActiveArticle(currentArticle);
@@ -858,6 +1075,8 @@
       currentSentenceIndex = 0;
       renderSentencesList();
       updateSentenceCounter();
+      updateProgressBar();
+      updateMiniPlayer();
       stopPlayback();
 
       setSpeakingSentencesFromArticle(article);
@@ -914,15 +1133,15 @@
       sentences.forEach((sentence, index) => {
         const item = document.createElement('div');
         item.id = `sentence-item-${index}`;
-        item.className = `cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100 ${index === currentSentenceIndex ? 'active-sentence' : ''} ${currentAppLang === 'zh' && !showPinyin ? 'hide-pinyin' : ''}`;
+        item.className = `cursor-pointer select-none p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100 active:bg-rose-50 ${index === currentSentenceIndex ? 'active-sentence' : ''} ${currentAppLang === 'zh' && !showPinyin ? 'hide-pinyin' : ''}`;
         item.onclick = () => selectAndPlaySentence(index);
 
         const mainPara = document.createElement('div');
-        mainPara.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} font-medium text-slate-800 tracking-wide text-base leading-relaxed`;
+        mainPara.className = `${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'} font-medium text-slate-800 tracking-wide sentence-main`;
         mainPara.innerHTML = currentAppLang === 'zh' ? renderPinyinRuby(sentence.content) : escapeHtml(sentence.content);
 
         const jpPara = document.createElement('p');
-        jpPara.className = 'sentence-trans text-xs text-slate-500 mt-1';
+        jpPara.className = 'sentence-trans text-slate-500 mt-1';
         jpPara.textContent = sentence.jp || '';
         if (!document.getElementById('toggle-translation').checked) {
           jpPara.classList.add('hidden');
@@ -973,11 +1192,14 @@
       speakingSentences.forEach((sentence, idx) => {
         const row = document.createElement('div');
         const isActive = idx === activeSpeakingSentenceIndex;
-        row.className = `p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+        row.className = `p-3 rounded-xl border transition-all cursor-pointer select-none flex items-start justify-between gap-3 ${
           isActive ? 'speaking-sentence-active border-rose-400 bg-rose-50/70 shadow-xs' : 'border-slate-200 bg-white hover:bg-slate-50'
         } ${currentAppLang === 'zh' && !showSpeakingPinyin ? 'hide-pinyin' : ''}`;
         
-        row.onclick = () => selectSpeakingSentence(idx);
+        row.onclick = () => {
+          selectSpeakingSentence(idx);
+          playSpeakingTargetVoice();
+        };
 
         const left = document.createElement('div');
         left.className = 'flex-1';
@@ -1040,7 +1262,15 @@
 
     function playSpeakingTargetVoice() {
       if (speakingSentences.length === 0 || !speakingSentences[activeSpeakingSentenceIndex]) return;
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
       const text = speakingSentences[activeSpeakingSentenceIndex].content;
       const utt = new SpeechSynthesisUtterance(text);
@@ -1048,6 +1278,12 @@
       utt.rate = playbackRate || 1.0;
       if (selectedVoice) utt.voice = selectedVoice;
 
+      utt.onerror = (e) => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
+        console.warn('SpeechSynthesis error:', e);
+      };
+
+      currentUtterance = utt;
       window.speechSynthesis.speak(utt);
     }
 
@@ -1098,10 +1334,10 @@
         const el = document.getElementById(`sentence-item-${idx}`);
         if (el) {
           if (idx === currentSentenceIndex) {
-            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 active-sentence';
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            el.classList.add('active-sentence');
+            scrollIntoContainer(el, document.getElementById('listening-text-flow'));
           } else {
-            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100';
+            el.classList.remove('active-sentence');
           }
         }
       });
@@ -1120,6 +1356,38 @@
       const pct = ((currentSentenceIndex + 1) / sentences.length) * 100;
       document.getElementById('player-progress-fill').style.width = `${pct}%`;
       document.getElementById('elapsed-time-display').textContent = `${currentSentenceIndex + 1} / ${sentences.length} 句`;
+      updateMiniPlayer();
+    }
+
+    /**
+     * Mobile mini player (fixed bottom bar on the listening tab)
+     */
+    function updateMiniPlayer() {
+      const fill = document.getElementById('mini-progress-fill');
+      const counter = document.getElementById('mini-sentence-counter');
+      if (!fill || !counter) return;
+      if (sentences.length === 0) {
+        fill.style.width = '0%';
+        counter.textContent = '0 / 0 句';
+        return;
+      }
+      fill.style.width = `${((currentSentenceIndex + 1) / sentences.length) * 100}%`;
+      counter.textContent = `${currentSentenceIndex + 1} / ${sentences.length} 句`;
+    }
+
+    /**
+     * Scroll an element into view inside its own scroll container only,
+     * without moving the page (avoids jumps behind the fixed mobile bars).
+     */
+    function scrollIntoContainer(el, container) {
+      if (!el || !container) return;
+      const elRect = el.getBoundingClientRect();
+      const cRect = container.getBoundingClientRect();
+      if (elRect.top < cRect.top) {
+        container.scrollBy({ top: elRect.top - cRect.top - 8, behavior: 'smooth' });
+      } else if (elRect.bottom > cRect.bottom) {
+        container.scrollBy({ top: elRect.bottom - cRect.bottom + 8, behavior: 'smooth' });
+      }
     }
 
     function togglePlay() {
@@ -1130,37 +1398,104 @@
       }
     }
 
-    function playCurrentSentence() {
+    function formatRate(rate) {
+      return (rate % 1 === 0 ? rate.toFixed(1) : String(rate)) + 'x';
+    }
+
+    function cyclePlaybackRate() {
+      const rates = [0.7, 0.85, 1.0, 1.25, 1.5];
+      const currentIdx = rates.findIndex(r => Math.abs(r - playbackRate) < 0.01);
+      const nextRate = rates[(currentIdx + 1) % rates.length] || 1.0;
+      setPlaybackRate(nextRate);
+    }
+
+    function getCurrentCharOffset() {
+      if (!isPlaying || !sentenceStartTime) return currentSentenceCharOffset;
+      const charsPerSec = (currentAppLang === 'zh' ? 3.6 : 12.0) * playbackRate;
+      const elapsedSec = Math.max(0, (performance.now() - sentenceStartTime) / 1000);
+      const estimated = sentenceUtteranceBaseOffset + Math.round(elapsedSec * charsPerSec);
+      const fullText = sentences[currentSentenceIndex]?.content || '';
+      return Math.min(fullText.length, Math.max(0, estimated));
+    }
+
+    function playCurrentSentence(charOffset = 0) {
       if (sentences.length === 0) return;
+      if (currentSentenceIndex < 0 || currentSentenceIndex >= sentences.length) return;
+
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
-
-      const text = sentences[currentSentenceIndex].content;
-      currentUtterance = new SpeechSynthesisUtterance(text);
-      currentUtterance.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
-      currentUtterance.rate = playbackRate;
-
-      if (selectedVoice) {
-        currentUtterance.voice = selectedVoice;
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
       }
 
-      currentUtterance.onstart = () => {
+      const fullText = sentences[currentSentenceIndex].content;
+      if (!fullText || !fullText.trim()) {
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence(0);
+        }
+        return;
+      }
+
+      // If offset exceeds end of sentence, move to next sentence
+      if (charOffset >= fullText.length) {
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence(0);
+        } else {
+          stopPlayback();
+          document.getElementById('playback-status-badge').textContent = '再生完了';
+        }
+        return;
+      }
+
+      sentenceUtteranceBaseOffset = Math.max(0, Math.floor(charOffset));
+      currentSentenceCharOffset = sentenceUtteranceBaseOffset;
+      const textToSpeak = fullText.slice(sentenceUtteranceBaseOffset);
+
+      const utt = new SpeechSynthesisUtterance(textToSpeak);
+      utt.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+      utt.rate = playbackRate;
+
+      if (selectedVoice) {
+        utt.voice = selectedVoice;
+      }
+
+      utt.onstart = () => {
         isPlaying = true;
+        sentenceStartTime = performance.now();
         updatePlayerUI(true);
-        document.getElementById('playback-status-badge').textContent = `再生中 (${playbackRate}x)`;
+        document.getElementById('playback-status-badge').textContent = `再生中 (${formatRate(playbackRate)})`;
       };
 
-      currentUtterance.onend = () => {
-        const isRepeat = document.getElementById('single-repeat-toggle').checked;
+      utt.onboundary = (e) => {
+        if (typeof e.charIndex === 'number') {
+          currentSentenceCharOffset = sentenceUtteranceBaseOffset + e.charIndex;
+        }
+      };
+
+      utt.onend = () => {
+        currentSentenceCharOffset = fullText.length;
+        const repeatBox = document.getElementById('single-repeat-toggle');
+        const isRepeat = repeatBox ? repeatBox.checked : false;
         if (isRepeat) {
           setTimeout(() => {
-            if (isPlaying) playCurrentSentence();
-          }, 400);
+            if (isPlaying) playCurrentSentence(0);
+          }, 300);
         } else {
           if (currentSentenceIndex < sentences.length - 1) {
             currentSentenceIndex++;
             highlightActiveSentence();
             updateSentenceCounter();
-            playCurrentSentence();
+            playCurrentSentence(0);
           } else {
             stopPlayback();
             document.getElementById('playback-status-badge').textContent = '再生完了';
@@ -1168,35 +1503,38 @@
         }
       };
 
-      currentUtterance.onerror = (e) => {
+      utt.onerror = (e) => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
         console.warn('SpeechSynthesis error:', e);
         stopPlayback();
       };
 
-      window.speechSynthesis.speak(currentUtterance);
+      currentUtterance = utt;
+      window.speechSynthesis.speak(utt);
     }
 
     function stopPlayback() {
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
       isPlaying = false;
+      sentenceStartTime = 0;
       updatePlayerUI(false);
       document.getElementById('playback-status-badge').textContent = '一時停止中';
     }
 
     function restartSentence() {
-      playCurrentSentence();
+      playCurrentSentence(0);
     }
 
     function updatePlayerUI(playing) {
-      const playIcon = document.getElementById('play-icon');
-      const pauseIcon = document.getElementById('pause-icon');
-      if (playing) {
-        playIcon.classList.add('hidden');
-        pauseIcon.classList.remove('hidden');
-      } else {
-        playIcon.classList.remove('hidden');
-        pauseIcon.classList.add('hidden');
-      }
+      const playIcons = [document.getElementById('play-icon'), document.getElementById('mini-play-icon')];
+      const pauseIcons = [document.getElementById('pause-icon'), document.getElementById('mini-pause-icon')];
+      playIcons.forEach(icon => icon && icon.classList.toggle('hidden', playing));
+      pauseIcons.forEach(icon => icon && icon.classList.toggle('hidden', !playing));
     }
 
     function jumpSentence(direction) {
@@ -1208,31 +1546,50 @@
 
     function seekBySeconds(seconds) {
       if (sentences.length === 0) return;
-      if (seconds === -1 || seconds === 1) {
-        if (seconds === -1) {
-          restartSentence();
-          showToast('1秒巻き戻し (先頭リプレイ)');
+      const charsPerSec = (currentAppLang === 'zh' ? 3.6 : 12.0) * playbackRate;
+      const deltaChars = Math.round(seconds * charsPerSec);
+
+      const currentOffset = getCurrentCharOffset();
+      const fullText = sentences[currentSentenceIndex]?.content || '';
+      let targetOffset = currentOffset + deltaChars;
+
+      if (targetOffset < 0) {
+        // Rewind beyond the start of current sentence
+        if (currentSentenceIndex > 0) {
+          currentSentenceIndex--;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          const prevFullText = sentences[currentSentenceIndex].content;
+          const prevTarget = Math.max(0, prevFullText.length + targetOffset);
+          playCurrentSentence(prevTarget);
         } else {
-          if (currentSentenceIndex < sentences.length - 1) {
-            jumpSentence(1);
-            showToast('1秒送り (次の文へ)');
-          }
+          // At the very first sentence, replay from start
+          playCurrentSentence(0);
         }
-      } else if (Math.abs(seconds) === 5) {
-        const delta = seconds > 0 ? 1 : -1;
-        jumpSentence(delta);
-        showToast(`${seconds > 0 ? '+5' : '-5'}秒スキップ`);
-      } else if (Math.abs(seconds) === 10) {
-        const delta = seconds > 0 ? 2 : -2;
-        const target = Math.max(0, Math.min(sentences.length - 1, currentSentenceIndex + delta));
-        selectAndPlaySentence(target);
-        showToast(`${seconds > 0 ? '+10' : '-10'}秒スキップ`);
+      } else if (targetOffset >= fullText.length) {
+        // Forward beyond the end of current sentence
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence(0);
+        } else {
+          stopPlayback();
+        }
+      } else {
+        // Jump within the same sentence
+        playCurrentSentence(targetOffset);
       }
     }
 
     function setPlaybackRate(rate) {
+      const wasPlaying = isPlaying;
+      const offset = getCurrentCharOffset();
       playbackRate = rate;
-      document.getElementById('rate-indicator').textContent = `${rate}x`;
+      const rateText = formatRate(rate);
+      document.getElementById('rate-indicator').textContent = rateText;
+      const miniRate = document.getElementById('mini-rate-indicator');
+      if (miniRate) miniRate.textContent = rateText;
       
       document.querySelectorAll('.rate-btn').forEach(btn => {
         if (parseFloat(btn.textContent) === rate) {
@@ -1242,8 +1599,8 @@
         }
       });
 
-      if (isPlaying) {
-        playCurrentSentence();
+      if (wasPlaying) {
+        playCurrentSentence(offset);
       }
     }
 
@@ -1770,7 +2127,20 @@
           viewEl.classList.add('hidden');
           btnEl.className = 'tab-btn px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
         }
+
+        // Mobile bottom navigation
+        const mBtnEl = document.getElementById(`mtab-btn-${v}`);
+        if (mBtnEl) {
+          const activeColor = currentAppLang === 'en' ? 'text-blue-600' : 'text-rose-600';
+          mBtnEl.className = `mtab-btn flex flex-col items-center justify-center gap-0.5 text-[11px] ${
+            v === tab ? `font-semibold ${activeColor}` : 'font-medium text-slate-500'
+          }`;
+        }
       });
+
+      if (tab !== currentTab) window.scrollTo({ top: 0 });
+      currentTab = tab;
+      document.body.classList.toggle('has-mini-player', tab === 'listening');
     }
 
     function toggleTranslationVisibility() {
@@ -1784,11 +2154,19 @@
     function changeFontSize(delta) {
       fontSizeLevel = Math.max(-1, Math.min(3, fontSizeLevel + delta));
       const flow = document.getElementById('listening-text-flow');
-      flow.classList.remove('text-sm', 'text-base', 'text-lg', 'text-xl');
-      if (fontSizeLevel === -1) flow.classList.add('text-sm');
-      else if (fontSizeLevel === 0) flow.classList.add('text-base');
-      else if (fontSizeLevel === 1) flow.classList.add('text-lg');
-      else if (fontSizeLevel >= 2) flow.classList.add('text-xl');
+      if (!flow) return;
+      flow.classList.remove('font-size-sm', 'font-size-base', 'font-size-lg', 'font-size-xl', 'font-size-2xl');
+      const classes = {
+        [-1]: 'font-size-sm',
+        0: 'font-size-base',
+        1: 'font-size-lg',
+        2: 'font-size-xl',
+        3: 'font-size-2xl'
+      };
+      flow.classList.add(classes[fontSizeLevel] || 'font-size-base');
+      try {
+        localStorage.setItem('lingua_font_size_level', String(fontSizeLevel));
+      } catch (_) {}
     }
 
     function setupKeyboardShortcuts() {
@@ -1800,12 +2178,18 @@
           togglePlay();
         } else if (e.code === 'ArrowLeft') {
           e.preventDefault();
-          if (e.shiftKey) seekBySeconds(-5);
-          else seekBySeconds(-1);
+          if (e.shiftKey) {
+            seekBySeconds(-1);
+          } else {
+            restartSentence();
+          }
         } else if (e.code === 'ArrowRight') {
           e.preventDefault();
-          if (e.shiftKey) seekBySeconds(5);
-          else seekBySeconds(1);
+          if (e.shiftKey) {
+            seekBySeconds(1);
+          } else {
+            seekBySeconds(5);
+          }
         } else if (e.code === 'ArrowUp') {
           e.preventDefault();
           jumpSentence(-1);

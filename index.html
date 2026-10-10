@@ -220,23 +220,46 @@
     <div class="h-1 bg-slate-700">
       <div id="mini-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
     </div>
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 shrink-0">
-        <span id="mini-sentence-counter" class="font-mono text-xs text-slate-300 font-semibold">0 / 0 句</span>
-        <span id="mini-rate-indicator" class="font-mono text-[11px] text-rose-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">1.0x</span>
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2">
+      <!-- Top info bar: Counter & Clickable Speed Button -->
+      <div class="flex items-center justify-between text-[11px] px-1 mb-1">
+        <span id="mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide">0 / 0 句</span>
+        <button id="mini-rate-btn" onclick="cyclePlaybackRate()" aria-label="再生速度を変更 (タップで切替)" class="font-mono text-[11px] text-rose-300 hover:text-rose-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all">
+          <span class="text-slate-400 text-[10px]">速度:</span>
+          <span id="mini-rate-indicator" class="font-bold text-rose-400">1.0x</span>
+        </button>
       </div>
-      <div class="flex items-center gap-1 sm:gap-2">
-        <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700 font-mono text-xs">-5s</button>
-        <button onclick="seekBySeconds(5)" aria-label="5秒進む" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700 font-mono text-xs">+5s</button>
-        <button onclick="jumpSentence(-1)" aria-label="前の文へ" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+
+      <!-- Controls row: centered play button surrounded by seconds and sentence controls: -1s -5s << ▷ >> +5s +1s -->
+      <div class="flex items-center justify-center gap-1 sm:gap-2">
+        <!-- -1s -->
+        <button onclick="seekBySeconds(-1)" aria-label="1秒戻る" title="1秒戻る" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
+          -1s
         </button>
-        <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-11 h-11 shrink-0 rounded-full bg-rose-600 active:scale-95 flex items-center justify-center shadow-lg shadow-rose-900/40 transition-transform">
-          <svg id="mini-play-icon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="mini-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <!-- -5s -->
+        <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" title="5秒戻る" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
+          -5s
         </button>
-        <button onclick="jumpSentence(1)" aria-label="次の文へ" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        <!-- << 前の文 -->
+        <button onclick="jumpSentence(-1)" aria-label="前の文へ" title="前の文へ" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+        </button>
+        <!-- ▷ 再生 / 一時停止 (中央) -->
+        <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 shrink-0 mx-0.5 transition-transform">
+          <svg id="mini-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="mini-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <!-- >> 次の文 -->
+        <button onclick="jumpSentence(1)" aria-label="次の文へ" title="次の文へ" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+        <!-- +5s -->
+        <button onclick="seekBySeconds(5)" aria-label="5秒進む" title="5秒進む" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
+          +5s
+        </button>
+        <!-- +1s -->
+        <button onclick="seekBySeconds(1)" aria-label="1秒進む" title="1秒進む" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold shrink-0 transition-transform active:scale-95">
+          +1s
         </button>
       </div>
     </div>
@@ -679,6 +702,11 @@
     let currentUtterance = null;
     let fontSizeLevel = 0; // -1, 0, 1, 2
     let isSingleRepeat = false;
+
+    // Playback seeking state
+    let currentSentenceCharOffset = 0;
+    let sentenceUtteranceBaseOffset = 0;
+    let sentenceStartTime = 0;
 
     let showPinyin = true;
     let showSpeakingPinyin = true;
@@ -1298,7 +1326,28 @@
       }
     }
 
-    function playCurrentSentence() {
+    function formatRate(rate) {
+      return (rate % 1 === 0 ? rate.toFixed(1) : String(rate)) + 'x';
+    }
+
+    function cyclePlaybackRate() {
+      const rates = [0.7, 0.85, 1.0, 1.25, 1.5];
+      const currentIdx = rates.findIndex(r => Math.abs(r - playbackRate) < 0.01);
+      const nextRate = rates[(currentIdx + 1) % rates.length] || 1.0;
+      setPlaybackRate(nextRate);
+      showToast(`再生速度: ${formatRate(nextRate)}`);
+    }
+
+    function getCurrentCharOffset() {
+      if (!isPlaying || !sentenceStartTime) return currentSentenceCharOffset;
+      const charsPerSec = (currentAppLang === 'zh' ? 3.6 : 12.0) * playbackRate;
+      const elapsedSec = Math.max(0, (performance.now() - sentenceStartTime) / 1000);
+      const estimated = sentenceUtteranceBaseOffset + Math.round(elapsedSec * charsPerSec);
+      const fullText = sentences[currentSentenceIndex]?.content || '';
+      return Math.min(fullText.length, Math.max(0, estimated));
+    }
+
+    function playCurrentSentence(charOffset = 0) {
       if (sentences.length === 0) return;
       if (currentSentenceIndex < 0 || currentSentenceIndex >= sentences.length) return;
 
@@ -1312,18 +1361,36 @@
         window.speechSynthesis.resume();
       }
 
-      const text = sentences[currentSentenceIndex].content;
-      if (!text || !text.trim()) {
+      const fullText = sentences[currentSentenceIndex].content;
+      if (!fullText || !fullText.trim()) {
         if (currentSentenceIndex < sentences.length - 1) {
           currentSentenceIndex++;
           highlightActiveSentence();
           updateSentenceCounter();
-          playCurrentSentence();
+          playCurrentSentence(0);
         }
         return;
       }
 
-      const utt = new SpeechSynthesisUtterance(text);
+      // If offset exceeds end of sentence, move to next sentence
+      if (charOffset >= fullText.length) {
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence(0);
+        } else {
+          stopPlayback();
+          document.getElementById('playback-status-badge').textContent = '再生完了';
+        }
+        return;
+      }
+
+      sentenceUtteranceBaseOffset = Math.max(0, Math.floor(charOffset));
+      currentSentenceCharOffset = sentenceUtteranceBaseOffset;
+      const textToSpeak = fullText.slice(sentenceUtteranceBaseOffset);
+
+      const utt = new SpeechSynthesisUtterance(textToSpeak);
       utt.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
       utt.rate = playbackRate;
 
@@ -1333,23 +1400,31 @@
 
       utt.onstart = () => {
         isPlaying = true;
+        sentenceStartTime = performance.now();
         updatePlayerUI(true);
-        document.getElementById('playback-status-badge').textContent = `再生中 (${playbackRate}x)`;
+        document.getElementById('playback-status-badge').textContent = `再生中 (${formatRate(playbackRate)})`;
+      };
+
+      utt.onboundary = (e) => {
+        if (typeof e.charIndex === 'number') {
+          currentSentenceCharOffset = sentenceUtteranceBaseOffset + e.charIndex;
+        }
       };
 
       utt.onend = () => {
+        currentSentenceCharOffset = fullText.length;
         const repeatBox = document.getElementById('single-repeat-toggle');
         const isRepeat = repeatBox ? repeatBox.checked : false;
         if (isRepeat) {
           setTimeout(() => {
-            if (isPlaying) playCurrentSentence();
+            if (isPlaying) playCurrentSentence(0);
           }, 300);
         } else {
           if (currentSentenceIndex < sentences.length - 1) {
             currentSentenceIndex++;
             highlightActiveSentence();
             updateSentenceCounter();
-            playCurrentSentence();
+            playCurrentSentence(0);
           } else {
             stopPlayback();
             document.getElementById('playback-status-badge').textContent = '再生完了';
@@ -1375,12 +1450,14 @@
       }
       window.speechSynthesis.cancel();
       isPlaying = false;
+      sentenceStartTime = 0;
       updatePlayerUI(false);
       document.getElementById('playback-status-badge').textContent = '一時停止中';
     }
 
     function restartSentence() {
-      playCurrentSentence();
+      playCurrentSentence(0);
+      showToast('文の先頭から再生');
     }
 
     function updatePlayerUI(playing) {
@@ -1399,33 +1476,55 @@
 
     function seekBySeconds(seconds) {
       if (sentences.length === 0) return;
-      if (seconds === -1 || seconds === 1) {
-        if (seconds === -1) {
-          restartSentence();
-          showToast('1秒巻き戻し (先頭リプレイ)');
+      const charsPerSec = (currentAppLang === 'zh' ? 3.6 : 12.0) * playbackRate;
+      const deltaChars = Math.round(seconds * charsPerSec);
+
+      const currentOffset = getCurrentCharOffset();
+      const fullText = sentences[currentSentenceIndex]?.content || '';
+      let targetOffset = currentOffset + deltaChars;
+
+      if (targetOffset < 0) {
+        // Rewind beyond the start of current sentence
+        if (currentSentenceIndex > 0) {
+          currentSentenceIndex--;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          const prevFullText = sentences[currentSentenceIndex].content;
+          const prevTarget = Math.max(0, prevFullText.length + targetOffset);
+          playCurrentSentence(prevTarget);
+          showToast(`${seconds}秒 (前の文へ)`);
         } else {
-          if (currentSentenceIndex < sentences.length - 1) {
-            jumpSentence(1);
-            showToast('1秒送り (次の文へ)');
-          }
+          // At the very first sentence, replay from start
+          playCurrentSentence(0);
+          showToast(`${seconds}秒 (文頭へ)`);
         }
-      } else if (Math.abs(seconds) === 5) {
-        const delta = seconds > 0 ? 1 : -1;
-        jumpSentence(delta);
-        showToast(`${seconds > 0 ? '+5' : '-5'}秒スキップ`);
-      } else if (Math.abs(seconds) === 10) {
-        const delta = seconds > 0 ? 2 : -2;
-        const target = Math.max(0, Math.min(sentences.length - 1, currentSentenceIndex + delta));
-        selectAndPlaySentence(target);
-        showToast(`${seconds > 0 ? '+10' : '-10'}秒スキップ`);
+      } else if (targetOffset >= fullText.length) {
+        // Forward beyond the end of current sentence
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence(0);
+          showToast(`+${seconds}秒 (次の文へ)`);
+        } else {
+          stopPlayback();
+          showToast('再生完了');
+        }
+      } else {
+        // Jump within the same sentence
+        playCurrentSentence(targetOffset);
+        showToast(`${seconds > 0 ? '+' : ''}${seconds}秒`);
       }
     }
 
     function setPlaybackRate(rate) {
+      const wasPlaying = isPlaying;
+      const offset = getCurrentCharOffset();
       playbackRate = rate;
-      document.getElementById('rate-indicator').textContent = `${rate}x`;
+      const rateText = formatRate(rate);
+      document.getElementById('rate-indicator').textContent = rateText;
       const miniRate = document.getElementById('mini-rate-indicator');
-      if (miniRate) miniRate.textContent = `${rate}x`;
+      if (miniRate) miniRate.textContent = rateText;
       
       document.querySelectorAll('.rate-btn').forEach(btn => {
         if (parseFloat(btn.textContent) === rate) {
@@ -1435,8 +1534,8 @@
         }
       });
 
-      if (isPlaying) {
-        playCurrentSentence();
+      if (wasPlaying) {
+        playCurrentSentence(offset);
       }
     }
 

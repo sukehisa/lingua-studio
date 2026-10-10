@@ -120,10 +120,10 @@
     }
     @media (max-width: 1023px) {
       body.has-mini-player {
-        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player #toast-container {
-        bottom: calc(5.5rem + env(safe-area-inset-bottom));
+        bottom: calc(4.75rem + env(safe-area-inset-bottom));
       }
     }
     @media (max-width: 767px) {
@@ -131,7 +131,7 @@
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player {
-        padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
       }
       #mobile-mini-player {
         bottom: calc(4rem + env(safe-area-inset-bottom));
@@ -141,7 +141,7 @@
         bottom: calc(5rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player #toast-container {
-        bottom: calc(9.5rem + env(safe-area-inset-bottom));
+        bottom: calc(8.75rem + env(safe-area-inset-bottom));
       }
     }
   </style>
@@ -220,25 +220,25 @@
     <div class="h-1 bg-slate-700">
       <div id="mini-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
     </div>
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-[4.25rem] flex items-center gap-1.5 sm:gap-3">
-      <div class="flex-1 min-w-0 pr-1">
-        <div id="mini-sentence-preview" class="text-sm font-medium truncate text-slate-100">—</div>
-        <div class="flex items-center gap-2 text-[11px] text-slate-400">
-          <span id="mini-sentence-counter" class="font-mono">0 / 0 句</span>
-          <span id="mini-rate-indicator" class="font-mono text-rose-400">1.0x</span>
-        </div>
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 shrink-0">
+        <span id="mini-sentence-counter" class="font-mono text-xs text-slate-300 font-semibold">0 / 0 句</span>
+        <span id="mini-rate-indicator" class="font-mono text-[11px] text-rose-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">1.0x</span>
       </div>
-      <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700 font-mono text-[11px]">-5s</button>
-      <button onclick="jumpSentence(-1)" aria-label="前の文へ" class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
-      </button>
-      <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-12 h-12 shrink-0 rounded-full bg-rose-600 active:scale-95 flex items-center justify-center shadow-lg shadow-rose-900/40 transition-transform">
-        <svg id="mini-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        <svg id="mini-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-      </button>
-      <button onclick="jumpSentence(1)" aria-label="次の文へ" class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-      </button>
+      <div class="flex items-center gap-1 sm:gap-2">
+        <button onclick="seekBySeconds(-5)" aria-label="5秒戻る" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700 font-mono text-xs">-5s</button>
+        <button onclick="seekBySeconds(5)" aria-label="5秒進む" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700 font-mono text-xs">+5s</button>
+        <button onclick="jumpSentence(-1)" aria-label="前の文へ" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+        </button>
+        <button onclick="togglePlay()" aria-label="再生/一時停止" class="w-11 h-11 shrink-0 rounded-full bg-rose-600 active:scale-95 flex items-center justify-center shadow-lg shadow-rose-900/40 transition-transform">
+          <svg id="mini-play-icon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="mini-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button onclick="jumpSentence(1)" aria-label="次の文へ" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-300 active:bg-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -261,16 +261,17 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-          <button onclick="openPasteModal()" class="justify-center px-3 py-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+        <!-- Action buttons (Desktop / Tablet only: on mobile they duplicate bottom nav) -->
+        <div class="hidden md:flex items-center gap-2">
+          <button onclick="openPasteModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
             テキストを貼付
           </button>
-          <button onclick="switchTab('catalog')" class="justify-center px-3 py-2.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+          <button onclick="switchTab('catalog')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
             教材一覧から選ぶ
           </button>
-          <button onclick="sendActiveToSpeaking()" class="col-span-2 justify-center px-3 py-2.5 sm:py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+          <button onclick="sendActiveToSpeaking()" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
             この文でスピーキング特訓へ
           </button>
@@ -281,18 +282,30 @@
         <!-- Main Text Display Box (Left/Top) -->
         <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col justify-between lg:min-h-[420px]">
           <div>
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 mb-4 text-xs text-slate-500">
-              <span class="flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 句をタップ/クリックしてその位置から再生できます
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 pb-3 border-b border-slate-100 mb-4 text-xs text-slate-500">
+              <span class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 句をタップして再生
               </span>
-              <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1.5 cursor-pointer text-xs">
-                  <input type="checkbox" id="toggle-translation" onchange="toggleTranslationVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
-                  訳文を表示
+              <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-2">
+                <!-- ピンイン表示切り替え -->
+                <label id="listening-pinyin-toggle-label" class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                  <input type="checkbox" id="toggle-pinyin" onchange="togglePinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  <span>ピンイン</span>
                 </label>
-                <div class="flex items-center gap-1">
-                  <button onclick="changeFontSize(-1)" class="w-8 h-8 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A-</button>
-                  <button onclick="changeFontSize(1)" class="w-8 h-8 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A+</button>
+                <!-- 訳文表示切り替え -->
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                  <input type="checkbox" id="toggle-translation" onchange="toggleTranslationVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
+                  <span>訳文</span>
+                </label>
+                <!-- 1文リピート再生切り替え -->
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none" title="シャドーイング用リピート再生">
+                  <input type="checkbox" id="single-repeat-toggle" class="rounded text-rose-600 focus:ring-rose-500">
+                  <span>1文リピート</span>
+                </label>
+                <!-- 文字サイズ変更 -->
+                <div class="flex items-center gap-1 pl-1 border-l border-slate-200">
+                  <button onclick="changeFontSize(-1)" title="文字サイズ縮小" class="w-7 h-7 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A-</button>
+                  <button onclick="changeFontSize(1)" title="文字サイズ拡大" class="w-7 h-7 sm:w-6 sm:h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs">A+</button>
                 </div>
               </div>
             </div>
@@ -305,13 +318,7 @@
 
           <!-- Bottom Shortcut Tip -->
           <div class="mt-4 sm:mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
-            <div class="flex items-center gap-3">
-              <label id="listening-pinyin-toggle-label" class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
-                <input type="checkbox" id="toggle-pinyin" onchange="togglePinyinVisibility()" class="rounded text-rose-600 focus:ring-rose-500" checked>
-                <span>ピンイン (拼音) を表示</span>
-              </label>
-              <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
-            </div>
+            <span id="current-lang-indicator" class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-medium">現在: 中国語</span>
             <div class="hidden md:flex items-center gap-2">
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">Space</span> 再生/一時停止
               <span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 font-mono text-slate-600">← / →</span> 1秒/5秒移動
@@ -355,36 +362,6 @@
                 </button>
               </div>
 
-              <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60 mb-5">
-                <div class="text-[11px] font-semibold text-slate-400 mb-2 text-center">秒単位スキップ・巻き戻し</div>
-                <div class="grid grid-cols-2 gap-2">
-                  <!-- Rewind buttons -->
-                  <div class="flex items-center justify-center gap-1">
-                    <button onclick="seekBySeconds(-1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -1秒
-                    </button>
-                    <button onclick="seekBySeconds(-5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -5秒
-                    </button>
-                    <button onclick="seekBySeconds(-10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-rose-900/50 hover:text-rose-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      -10秒
-                    </button>
-                  </div>
-                  <!-- Forward buttons -->
-                  <div class="flex items-center justify-center gap-1">
-                    <button onclick="seekBySeconds(1)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +1秒
-                    </button>
-                    <button onclick="seekBySeconds(5)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +5秒
-                    </button>
-                    <button onclick="seekBySeconds(10)" class="flex-1 py-1.5 bg-slate-700/70 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-200 text-xs rounded-lg transition-colors font-mono font-medium">
-                      +10秒
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               <!-- Speed Controller -->
               <div class="space-y-2 mb-4">
                 <div class="flex items-center justify-between text-xs">
@@ -401,7 +378,7 @@
               </div>
 
               <!-- Voice Selection -->
-              <div class="space-y-1">
+              <div class="space-y-1 mb-4">
                 <label for="voice-select" class="text-xs text-slate-400">中国語音声 (Voice)</label>
                 <select id="voice-select" onchange="onVoiceChange()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500">
                   <option value="">ブラウザ既定の中国語 (zh-CN)</option>
@@ -409,13 +386,38 @@
               </div>
             </div>
 
-            <!-- Single sentence repeat loop -->
-            <div class="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-              <label class="flex items-center gap-2 cursor-pointer text-slate-300">
-                <input type="checkbox" id="single-repeat-toggle" class="rounded bg-slate-700 text-rose-500 focus:ring-rose-500">
-                1文リピート再生 (シャドーイング用)
-              </label>
-              <button onclick="restartSentence()" class="text-rose-400 hover:text-rose-300 text-xs font-medium">この文を頭出し</button>
+            <!-- Bottom Area: Skip by seconds & Restart current sentence -->
+            <div class="pt-4 mt-2 border-t border-slate-800 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-[11px] font-semibold text-slate-400">秒単位スキップ・巻き戻し</span>
+                <button onclick="restartSentence()" class="text-rose-400 hover:text-rose-300 text-xs font-medium">この文を頭出し</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Rewind buttons -->
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="seekBySeconds(-10)" title="10秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -10s
+                  </button>
+                  <button onclick="seekBySeconds(-5)" title="5秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -5s
+                  </button>
+                  <button onclick="seekBySeconds(-1)" title="1秒戻る" class="flex-1 py-1.5 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    -1s
+                  </button>
+                </div>
+                <!-- Forward buttons -->
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="seekBySeconds(1)" title="1秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +1s
+                  </button>
+                  <button onclick="seekBySeconds(5)" title="5秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +5s
+                  </button>
+                  <button onclick="seekBySeconds(10)" title="10秒進む" class="flex-1 py-1.5 bg-slate-800 hover:bg-emerald-900/50 hover:text-emerald-200 text-slate-300 text-xs rounded-lg transition-colors font-mono font-medium">
+                    +10s
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1031,7 +1033,7 @@
       sentences.forEach((sentence, index) => {
         const item = document.createElement('div');
         item.id = `sentence-item-${index}`;
-        item.className = `cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100 ${index === currentSentenceIndex ? 'active-sentence' : ''} ${currentAppLang === 'zh' && !showPinyin ? 'hide-pinyin' : ''}`;
+        item.className = `cursor-pointer select-none p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100 active:bg-rose-50 ${index === currentSentenceIndex ? 'active-sentence' : ''} ${currentAppLang === 'zh' && !showPinyin ? 'hide-pinyin' : ''}`;
         item.onclick = () => selectAndPlaySentence(index);
 
         const mainPara = document.createElement('div');
@@ -1090,11 +1092,14 @@
       speakingSentences.forEach((sentence, idx) => {
         const row = document.createElement('div');
         const isActive = idx === activeSpeakingSentenceIndex;
-        row.className = `p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+        row.className = `p-3 rounded-xl border transition-all cursor-pointer select-none flex items-start justify-between gap-3 ${
           isActive ? 'speaking-sentence-active border-rose-400 bg-rose-50/70 shadow-xs' : 'border-slate-200 bg-white hover:bg-slate-50'
         } ${currentAppLang === 'zh' && !showSpeakingPinyin ? 'hide-pinyin' : ''}`;
         
-        row.onclick = () => selectSpeakingSentence(idx);
+        row.onclick = () => {
+          selectSpeakingSentence(idx);
+          playSpeakingTargetVoice();
+        };
 
         const left = document.createElement('div');
         left.className = 'flex-1';
@@ -1157,7 +1162,15 @@
 
     function playSpeakingTargetVoice() {
       if (speakingSentences.length === 0 || !speakingSentences[activeSpeakingSentenceIndex]) return;
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
       const text = speakingSentences[activeSpeakingSentenceIndex].content;
       const utt = new SpeechSynthesisUtterance(text);
@@ -1165,6 +1178,12 @@
       utt.rate = playbackRate || 1.0;
       if (selectedVoice) utt.voice = selectedVoice;
 
+      utt.onerror = (e) => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
+        console.warn('SpeechSynthesis error:', e);
+      };
+
+      currentUtterance = utt;
       window.speechSynthesis.speak(utt);
     }
 
@@ -1215,10 +1234,10 @@
         const el = document.getElementById(`sentence-item-${idx}`);
         if (el) {
           if (idx === currentSentenceIndex) {
-            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 active-sentence';
+            el.classList.add('active-sentence');
             scrollIntoContainer(el, document.getElementById('listening-text-flow'));
           } else {
-            el.className = 'cursor-pointer p-2.5 rounded-xl transition-all duration-150 hover:bg-slate-100';
+            el.classList.remove('active-sentence');
           }
         }
       });
@@ -1246,19 +1265,14 @@
     function updateMiniPlayer() {
       const fill = document.getElementById('mini-progress-fill');
       const counter = document.getElementById('mini-sentence-counter');
-      const preview = document.getElementById('mini-sentence-preview');
-      if (!fill || !counter || !preview) return;
+      if (!fill || !counter) return;
       if (sentences.length === 0) {
         fill.style.width = '0%';
         counter.textContent = '0 / 0 句';
-        preview.textContent = '—';
         return;
       }
       fill.style.width = `${((currentSentenceIndex + 1) / sentences.length) * 100}%`;
       counter.textContent = `${currentSentenceIndex + 1} / ${sentences.length} 句`;
-      const current = sentences[currentSentenceIndex];
-      preview.textContent = current ? current.content : '—';
-      preview.className = `text-sm font-medium truncate text-slate-100 ${currentAppLang === 'zh' ? 'font-cn' : 'font-sans'}`;
     }
 
     /**
@@ -1286,29 +1300,50 @@
 
     function playCurrentSentence() {
       if (sentences.length === 0) return;
+      if (currentSentenceIndex < 0 || currentSentenceIndex >= sentences.length) return;
+
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
-
-      const text = sentences[currentSentenceIndex].content;
-      currentUtterance = new SpeechSynthesisUtterance(text);
-      currentUtterance.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
-      currentUtterance.rate = playbackRate;
-
-      if (selectedVoice) {
-        currentUtterance.voice = selectedVoice;
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
       }
 
-      currentUtterance.onstart = () => {
+      const text = sentences[currentSentenceIndex].content;
+      if (!text || !text.trim()) {
+        if (currentSentenceIndex < sentences.length - 1) {
+          currentSentenceIndex++;
+          highlightActiveSentence();
+          updateSentenceCounter();
+          playCurrentSentence();
+        }
+        return;
+      }
+
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+      utt.rate = playbackRate;
+
+      if (selectedVoice) {
+        utt.voice = selectedVoice;
+      }
+
+      utt.onstart = () => {
         isPlaying = true;
         updatePlayerUI(true);
         document.getElementById('playback-status-badge').textContent = `再生中 (${playbackRate}x)`;
       };
 
-      currentUtterance.onend = () => {
-        const isRepeat = document.getElementById('single-repeat-toggle').checked;
+      utt.onend = () => {
+        const repeatBox = document.getElementById('single-repeat-toggle');
+        const isRepeat = repeatBox ? repeatBox.checked : false;
         if (isRepeat) {
           setTimeout(() => {
             if (isPlaying) playCurrentSentence();
-          }, 400);
+          }, 300);
         } else {
           if (currentSentenceIndex < sentences.length - 1) {
             currentSentenceIndex++;
@@ -1322,15 +1357,22 @@
         }
       };
 
-      currentUtterance.onerror = (e) => {
+      utt.onerror = (e) => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
         console.warn('SpeechSynthesis error:', e);
         stopPlayback();
       };
 
-      window.speechSynthesis.speak(currentUtterance);
+      currentUtterance = utt;
+      window.speechSynthesis.speak(utt);
     }
 
     function stopPlayback() {
+      if (currentUtterance) {
+        currentUtterance.onstart = null;
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+      }
       window.speechSynthesis.cancel();
       isPlaying = false;
       updatePlayerUI(false);

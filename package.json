@@ -5,7 +5,10 @@
   "description": "LinguaStudio - 中国語 & 英語学習スタジオ",
   "scripts": {
     "build": "node scripts/sync-catalog.js",
-    "sync": "node scripts/sync-catalog.js"
+    "sync": "node scripts/sync-catalog.js",
+    "dev": "wrangler dev",
+    "migrate:local": "wrangler d1 migrations apply lingua_studio_db --local",
+    "migrate:remote": "wrangler d1 migrations apply lingua_studio_db --remote"
   },
   "devDependencies": {
     "wrangler": "^4.147.0"

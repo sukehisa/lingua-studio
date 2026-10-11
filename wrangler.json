@@ -1,9 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lingua-studio",
+  "main": "src/worker.js",
   "compatibility_date": "2024-09-23",
   "assets": {
     "directory": "."
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lingua_studio_db",
+      "database_id": "lingua-studio-db",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "GOOGLE_CLIENT_ID": "",
+    "DEV_MODE": "true"
   },
   "previews": {}
 }

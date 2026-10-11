@@ -60,6 +60,16 @@ window.DEFAULT_CATALOG = ${JSON.stringify(materials, null, 2)};
 
   fs.writeFileSync(CATALOG_BUNDLE_PATH, catalogJsContent, 'utf-8');
   console.log(`Updated catalog bundle: ${CATALOG_BUNDLE_PATH}`);
+
+  // Update src/default-materials.json for Worker seeding
+  const srcDir = path.join(ROOT_DIR, 'src');
+  if (!fs.existsSync(srcDir)) {
+    fs.mkdirSync(srcDir, { recursive: true });
+  }
+  const defaultMaterialsPath = path.join(srcDir, 'default-materials.json');
+  fs.writeFileSync(defaultMaterialsPath, JSON.stringify(materials, null, 2) + '\n', 'utf-8');
+  console.log(`Updated worker default materials: ${defaultMaterialsPath}`);
+
   console.log(`Successfully synced ${materials.length} material(s).`);
 }
 

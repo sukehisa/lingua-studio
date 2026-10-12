@@ -1,0 +1,52 @@
+export default [
+  {
+    "id": "sample-1",
+    "title": "咖啡馆点单与闲聊 (カフェでの注文と会話)",
+    "titleEn": "Ordering at a Café & Casual Conversation",
+    "tag": "日常会話",
+    "chinese": "你好，欢迎光临！请问您今天想喝点什么？我想要一杯热美式咖啡，不用加糖。好的，请问需要搭配我们店里的现烤可颂面包吗？今天有特价优惠哦。听起来很不错，那就再来一个原味可颂吧。总共是三十五元，请问您怎么支付？我用微信扫码支付。好的，这是您的小票和取餐号码牌，请稍候。",
+    "english": "Hello, welcome! What would you like to drink today? I would like a hot Americano, no sugar please. Sure! Would you like to pair it with our freshly baked croissants? We have a special discount today. That sounds great, let me also get an original croissant then. That comes to thirty-five yuan in total. How would you like to pay? I will pay by scanning the WeChat QR code. All right, here are your receipt and order number card. Please wait a moment.",
+    "translation": "こんにちは、いらっしゃいませ！本日は何をお召し上がりですか？ホットのアメリカンを一つ、砂糖は要りません。かしこまりました。店内で焼きたてのクロワッサンはいかがでしょうか？本日限定のお得な割引がございます。美味しそうですね、ではプレーンクロワッサンを一つ追加してください。合計で35元になります。お支払い方法はいかがされますか？WeChat PayのQRコードで支払います。承知しました。こちらがレシートと呼び出し番号札です。少々お待ちください。",
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "sample-2",
+    "title": "关于习惯与生活节奏 (習慣と生活リズム)",
+    "titleEn": "Forming Good Habits & Daily Routine",
+    "tag": "ライフスタイル",
+    "chinese": "研究表明，养成一个好习惯往往需要连续坚持二十一天以上。很多人在刚开始的时候信心十足，但几天后就会因为感到疲劳而放弃。其实，每天只要进步一点点，长期坚持下来就会产生巨大的改变。合理的作息时间和适量的体育运动，是保持身体健康和工作效率的重要基础。",
+    "english": "Studies show that forming a good habit often requires sticking with it for at least twenty-one consecutive days. Many people are full of confidence at the very beginning, but give up after a few days due to fatigue. In fact, making just a tiny bit of progress every day will lead to dramatic changes over time. A balanced schedule and moderate physical exercise are vital foundations for maintaining health and productivity.",
+    "translation": "研究によると、良い習慣を身につけるには21日以上継続する必要があると言われています。多くの人は始めた当初は自信満々ですが、数日経つと疲労感から諦めてしまいます。実際には、毎日ほんの少しずつ進歩するだけで、長期的には非常に大きな変化を生み出します。規則正しい生活リズムと適度な運動は、健康と仕事の効率を維持するための重要な基盤です。",
+    "createdAt": "2026-03-02"
+  },
+  {
+    "id": "sample-3",
+    "title": "商务洽谈与合作 (ビジネス提携の協議)",
+    "titleEn": "Business Partnership Negotiations",
+    "tag": "ビジネス",
+    "chinese": "王总，非常感谢您百忙之中抽出时间与我们团队进行深入探讨。我们已经详细阅读了贵公司提出的合作方案，总体上非常赞同双方在跨境物流领域的资源整合。不过，针对第三阶段的技术对接与数据安全协议，我们希望能够进一步细化权责。如果贵方同意，我们可以在下周一前提交修改后的正式合同草案。",
+    "english": "Mr. Wang, thank you very much for taking time out of your busy schedule to have in-depth discussions with our team. We have thoroughly reviewed the partnership proposal submitted by your company, and we fully agree with integrating our resources in cross-border logistics. However, regarding the technical integration and data security protocols in phase three, we hope to further clarify mutual responsibilities. If you agree, we can submit a revised formal draft agreement by next Monday.",
+    "translation": "王総経理、お忙しいところ時間を割いて当方チームと詳細な議論を行っていただき、心より感謝申し上げます。貴社からご提案いただいた提携案を精読いたしましたが、越境物流分野での双方のリソース統合については全面的に賛同いたします。ただ、第3フェーズにおけるシステム連携とデータセキュリティ協定に関して、責任範囲をさらに明確化したいと考えております。もしご同意いただけるようであれば、来週月曜までに修正後の正式な契約書草案を提出いたします。",
+    "createdAt": "2026-03-03"
+  },
+  {
+    "id": "sample-4",
+    "title": "酒店办理入住 (ホテルのチェックイン)",
+    "titleEn": "Hotel Check-in & Inquiries",
+    "tag": "旅行",
+    "chinese": "您好，我预订了一间大床房，这是我的预订确认单。好的，请出示您的护照进行登记。请问房间包含免费早餐吗？是的，早餐在二楼餐厅，时间是早上七点到十点。这是您的房卡，电梯在您的右前方。",
+    "english": "Hello, I booked a king-size bedroom. Here is my booking confirmation. Sure, please present your passport for registration. Does the room include complimentary breakfast? Yes, breakfast is served at the second-floor restaurant from 7:00 AM to 10:00 AM. Here is your room keycard, and the elevator is ahead to your right.",
+    "translation": "こんにちは、ダブルベッドルームを予約しています。こちらが予約確認書です。かしこまりました、ご登録のためパスポートをご提示ください。お部屋に無料の朝食は含まれていますか？はい、2階のレストランにて午前7時から10時までご利用いただけます。こちらがルームキーでございます。エレベーターは右手前方にございます。",
+    "createdAt": "2026-10-04"
+  },
+  {
+    "id": "ubx-boxing-hiit-workout",
+    "title": "UBX拳击健身与HIIT训练 (UBXボクシングジムとHIIT)",
+    "titleEn": "Boxing-based HIIT Workout at UBX",
+    "tag": "日常会話",
+    "chinese": "我现在在一家叫UBX的以拳击为基础的健身房锻炼。就像真正的拳击一样，每轮3分钟，总共12轮运动，每轮之间休息1分钟。每一轮都有不同的项目，而且每次都会换，比如沙袋、哑铃、引体向上和自重训练等。这其实就是所谓的HIIT，也就是3分钟高强度运动和1分钟休息交替进行。在拳击轮次里，教练还会带着练习打靶。我已经坚持了大概一年，体能和筋肉都增强了，体型也有了很明显的变化。和普通的健身房不同，这里不需要自己安排训练计划，而且速战速决，非常适合我，所以一直坚持了下来。",
+    "english": "Right now, I'm working out at this boxing-based gym called UBX. Just like real boxing, it's 12 rounds total, with 3 minutes per round and a 1-minute rest in between. Every round has a different station that changes every time, like heavy bags, dumbbells, pull-ups, or bodyweight exercises. It's essentially HIIT, where you alternate between 3 minutes of high-intensity work and 1 minute of rest. During the boxing rounds, you even get to do pad work with a coach. I've been at it for about a year now, and I've built up solid endurance and muscle, so my body has totally transformed. Unlike regular gyms, you don't have to plan your own workout, and you're in and out fast, so it fits me really well and has been super easy to stick with.",
+    "translation": "現在、UBXというボクシングをベースとしたジムに通って運動しているよ。ボクシングみたいに1ラウンド3分で、合計12ラウンドの運動、ラウンド間の休憩は1分。各ラウンドには、それぞれサンドバッグとかダンベルとか懸垂、自重運動とか、毎回変わるメニューが用意されているんだ。いわゆるHIITで、3分間の負荷の高い運動と1分間の休憩を交互に繰り返す感じ。ボクシングラウンドは、コーチの人とミット打ちもするよ。もう1年くらい続けてるけど、体力や筋肉がついて、とても体つきが変わってきた。普通のジムと違って、メニューを考えなくて良いし、短時間でスパッと終わるからかなり自分に合っていて続いている。",
+    "createdAt": "2026-10-04"
+  }
+];

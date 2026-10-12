@@ -1012,7 +1012,8 @@
     let recordedAudios = [];
     let speechRecognizer = null;
     let accumulatedTranscription = '';
-    let currentFinalTranscription = '';
+    let currentSessionFinal = '';
+    let currentSessionInterim = '';
     let liveTranscription = '';
     let latestAudioPlayer = null;
     let speakingInputMode = 'transcribe'; // 'transcribe' (リアルタイム文字起こし) or 'audio' (マイク録音・再生)
@@ -2364,10 +2365,36 @@
     }
 
     /**
+     * Joins two transcript parts cleanly with language-appropriate spacing.
+     */
+    function joinTranscripts(part1, part2, lang) {
+      if (!part1) return (part2 || '').trim();
+      if (!part2) return (part1 || '').trim();
+      const p1 = part1.trim();
+      const p2 = part2.trim();
+      if (!p1) return p2;
+      if (!p2) return p1;
+
+      if ((lang || currentAppLang) === 'zh') {
+        const p1EndsWithAscii = /[a-zA-Z0-9]$/.test(p1);
+        const p2StartsWithAscii = /^[a-zA-Z0-9]/.test(p2);
+        if (p1EndsWithAscii || p2StartsWithAscii) {
+          return `${p1} ${p2}`.replace(/\s+/g, ' ');
+        }
+        return `${p1}${p2}`;
+      } else {
+        if (/^[.,!?;:]/.test(p2)) {
+          return `${p1}${p2}`.replace(/\s+/g, ' ');
+        }
+        return `${p1} ${p2}`.replace(/\s+/g, ' ');
+      }
+    }
+
+    /**
      * Updates the expanded mini player real-time transcription display.
      * Highlights in-flight speech and automatically keeps latest words in view.
      */
-    function updateMiniTranscriptionDisplay(displayText, interim) {
+    function updateMiniTranscriptionDisplay(displayText, interim, finalPart) {
       const miniStatus = document.getElementById('speaking-mini-live-status');
       const badge = document.getElementById('mini-transcribe-badge');
       const pulse = document.getElementById('mini-transcribe-pulse');
@@ -2392,8 +2419,17 @@
       }
 
       if (interim) {
-        const finalPart = accumulatedTranscription ? accumulatedTranscription + ' ' : '';
-        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(finalPart)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(interim)}</span>`;
+        let formattedFinal = '';
+        if (finalPart) {
+          if (currentAppLang === 'zh') {
+            const endsWithAscii = /[a-zA-Z0-9]$/.test(finalPart);
+            const startsWithAscii = /^[a-zA-Z0-9]/.test(interim);
+            formattedFinal = (endsWithAscii || startsWithAscii) ? finalPart + ' ' : finalPart;
+          } else {
+            formattedFinal = finalPart + ' ';
+          }
+        }
+        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(formattedFinal)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(interim)}</span>`;
       } else {
         miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(displayText)}</span>`;
       }
@@ -2539,32 +2575,35 @@
         };
 
         speechRecognizer.onresult = (event) => {
-          let interim = '';
+          let sessionInterim = '';
           let sessionFinal = '';
 
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              sessionFinal += event.results[i][0].transcript;
+          for (let i = 0; i < event.results.length; ++i) {
+            const res = event.results[i];
+            if (!res || !res[0]) continue;
+            const text = res[0].transcript;
+            if (res.isFinal) {
+              sessionFinal = joinTranscripts(sessionFinal, text, currentAppLang);
             } else {
-              interim += event.results[i][0].transcript;
+              sessionInterim = joinTranscripts(sessionInterim, text, currentAppLang);
             }
           }
 
-          if (sessionFinal) {
-            accumulatedTranscription = [accumulatedTranscription, sessionFinal].filter(Boolean).join(' ');
-          }
+          currentSessionFinal = sessionFinal.trim();
+          currentSessionInterim = sessionInterim.trim();
 
-          const displayText = (accumulatedTranscription + (interim ? ' ' + interim : '')).trim();
-          liveTranscription = displayText;
+          const combinedFinal = joinTranscripts(accumulatedTranscription, currentSessionFinal, currentAppLang);
+          const fullText = joinTranscripts(combinedFinal, currentSessionInterim, currentAppLang);
+          liveTranscription = fullText;
 
           const box = document.getElementById('live-transcription-text');
           if (box) {
-            box.textContent = displayText || '発話内容がここにリアルタイムで表示されます...';
+            box.textContent = fullText || '発話内容がここにリアルタイムで表示されます...';
             box.className = 'text-slate-900 text-sm min-h-[50px] leading-relaxed font-medium';
           }
 
           if (isRecording) {
-            updateMiniTranscriptionDisplay(displayText, interim);
+            updateMiniTranscriptionDisplay(fullText, currentSessionInterim, combinedFinal);
           }
         };
 
@@ -2591,6 +2630,13 @@
         };
 
         speechRecognizer.onend = () => {
+          const sessionPending = joinTranscripts(currentSessionFinal, currentSessionInterim, currentAppLang);
+          if (sessionPending) {
+            accumulatedTranscription = joinTranscripts(accumulatedTranscription, sessionPending, currentAppLang);
+            currentSessionFinal = '';
+            currentSessionInterim = '';
+          }
+
           // If still recording and not explicitly stopped by the user, restart after small delay
           // (prevents rapid-fire restart deadlock on WebKit / iOS Safari)
           if (isRecording && !isExplicitlyStopping) {
@@ -2653,7 +2699,8 @@
         audioStream = null;
       }
       accumulatedTranscription = '';
-      currentFinalTranscription = '';
+      currentSessionFinal = '';
+      currentSessionInterim = '';
       liveTranscription = '';
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -2746,6 +2793,16 @@
           speechRecognizer.onend = null;
           speechRecognizer.stop();
         } catch (e) {}
+      }
+
+      const sessionPending = joinTranscripts(currentSessionFinal, currentSessionInterim, currentAppLang);
+      if (sessionPending) {
+        accumulatedTranscription = joinTranscripts(accumulatedTranscription, sessionPending, currentAppLang);
+        currentSessionFinal = '';
+        currentSessionInterim = '';
+      }
+      if (!liveTranscription && accumulatedTranscription) {
+        liveTranscription = accumulatedTranscription;
       }
 
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {

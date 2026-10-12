@@ -963,9 +963,23 @@
     /**
      * User Authentication & Google SSO
      */
+    let authToken = localStorage.getItem('lingua_session_token') || '';
+
+    async function apiFetch(url, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      return fetch(url, {
+        credentials: 'same-origin',
+        ...options,
+        headers
+      });
+    }
+
     async function initAuth() {
       try {
-        const configRes = await fetch('/api/auth/config');
+        const configRes = await apiFetch('/api/auth/config');
         if (configRes.ok) {
           authConfig = await configRes.json();
         }
@@ -974,7 +988,7 @@
       }
 
       try {
-        const meRes = await fetch('/api/auth/me');
+        const meRes = await apiFetch('/api/auth/me');
         if (meRes.ok) {
           const data = await meRes.json();
           if (data && data.user) {
@@ -1159,7 +1173,7 @@
     async function handleGoogleCredentialResponse(response) {
       try {
         showToast('Googleアカウント認証中...');
-        const res = await fetch('/api/auth/google', {
+        const res = await apiFetch('/api/auth/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ credential: response.credential })
@@ -1167,6 +1181,10 @@
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error || '認証に失敗しました');
+        }
+        if (data.token) {
+          authToken = data.token;
+          localStorage.setItem('lingua_session_token', data.token);
         }
         setLoggedInUser(data.user);
         closeAuthModal();
@@ -1183,7 +1201,7 @@
     async function handleDevLogin(customName, customEmail) {
       try {
         showToast('開発用ログイン中...');
-        const res = await fetch('/api/auth/dev-login', {
+        const res = await apiFetch('/api/auth/dev-login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1193,6 +1211,10 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'ログインに失敗しました');
+        if (data.token) {
+          authToken = data.token;
+          localStorage.setItem('lingua_session_token', data.token);
+        }
         setLoggedInUser(data.user);
         closeAuthModal();
         await fetchUserMaterials();
@@ -1207,7 +1229,9 @@
 
     async function handleLogout() {
       try {
-        await fetch('/api/auth/logout', { method: 'POST' });
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+        authToken = '';
+        localStorage.removeItem('lingua_session_token');
         setLoggedOut();
         await initializeCatalogData();
         if (catalog.length > 0) {
@@ -1215,13 +1239,16 @@
         }
         showToast('ログアウトしました');
       } catch (err) {
+        authToken = '';
+        localStorage.removeItem('lingua_session_token');
+        setLoggedOut();
         showToast('ログアウトに失敗しました', 'error');
       }
     }
 
     async function fetchUserMaterials() {
       try {
-        const res = await fetch('/api/materials');
+        const res = await apiFetch('/api/materials');
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.materials)) {
@@ -1238,7 +1265,7 @@
 
     async function handleCatalogSync() {
       if (currentUser) {
-        const shouldRestore = confirm('教材ライブラリを同期します。\\n\\n「OK」を押すとクラウドから最新データを再同期します。初期サンプル教材を復元したい場合は、「キャンセル」を押してから次の確認で復元を選択してください。');
+        const shouldRestore = confirm('教材ライブラリを同期します。\n\n「OK」を押すとクラウドから最新データを再同期します。初期サンプル教材を復元したい場合は、「キャンセル」を押してから次の確認で復元を選択してください。');
         if (shouldRestore) {
           showToast('クラウドからマイ教材を同期中...');
           await fetchUserMaterials();
@@ -1262,7 +1289,7 @@
 
       try {
         showToast('初期教材を復元中...');
-        const res = await fetch('/api/materials/restore-defaults', { method: 'POST' });
+        const res = await apiFetch('/api/materials/restore-defaults', { method: 'POST' });
         if (res.ok) {
           const data = await res.json();
           catalog = data.materials;
@@ -2377,7 +2404,7 @@
 
       if (currentUser) {
         try {
-          const res = await fetch(`/api/materials/${encodeURIComponent(id)}`, {
+          const res = await apiFetch(`/api/materials/${encodeURIComponent(id)}`, {
             method: 'DELETE'
           });
           if (!res.ok) {
@@ -2499,7 +2526,7 @@
       if (editingArticleId) {
         if (currentUser) {
           try {
-            const res = await fetch(`/api/materials/${encodeURIComponent(editingArticleId)}`, {
+            const res = await apiFetch(`/api/materials/${encodeURIComponent(editingArticleId)}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -2555,7 +2582,7 @@
       // Creating a new article
       if (currentUser) {
         try {
-          const res = await fetch('/api/materials', {
+          const res = await apiFetch('/api/materials', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

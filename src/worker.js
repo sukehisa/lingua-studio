@@ -273,10 +273,83 @@ async function seedUserMaterialsIfEmpty(db, userId) {
   }
 }
 
-function generateSessionToken() {
-  const buffer = new Uint8Array(32);
-  crypto.getRandomValues(buffer);
-  return Array.from(buffer, b => b.toString(16).padStart(2, '0')).join('');
+function base64UrlEncodeBytes(uint8Array) {
+  let binary = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlEncode(str) {
+  return base64UrlEncodeBytes(new TextEncoder().encode(str));
+}
+
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+function base64UrlDecodeBytes(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function getHmacKey(secret) {
+  const enc = new TextEncoder();
+  return await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+}
+
+async function signSessionToken(payload, secret) {
+  const payloadStr = JSON.stringify(payload);
+  const payloadB64 = base64UrlEncode(payloadStr);
+  const key = await getHmacKey(secret);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
+  const sigB64 = base64UrlEncodeBytes(new Uint8Array(sig));
+  return `${payloadB64}.${sigB64}`;
+}
+
+async function verifySessionToken(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [payloadB64, sigB64] = parts;
+  try {
+    const key = await getHmacKey(secret);
+    const sigBytes = base64UrlDecodeBytes(sigB64);
+    const isValid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(payloadB64));
+    if (!isValid) return null;
+
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
+    if (!payload || !payload.exp || payload.exp < Date.now()) {
+      return null;
+    }
+    return payload;
+  } catch (err) {
+    return null;
+  }
 }
 
 function parseCookies(request) {
@@ -300,7 +373,7 @@ function createSessionCookie(token, maxAgeSeconds, isSecure) {
   return cookie;
 }
 
-async function getAuthenticatedUser(request, db) {
+async function getAuthenticatedUser(request, db, env) {
   const cookies = parseCookies(request);
   let token = cookies['ls_session'];
 
@@ -313,15 +386,33 @@ async function getAuthenticatedUser(request, db) {
 
   if (!token) return null;
 
-  const now = Date.now();
-  const session = await db.prepare(`
-    SELECT u.id, u.email, u.name, u.picture
-    FROM sessions s
-    JOIN users u ON s.user_id = u.id
-    WHERE s.token = ? AND s.expires_at > ?
-  `).bind(token, now).first();
+  // 1. Verify stateless signed session token across all isolates
+  const secret = (env && env.SESSION_SECRET) || 'lingua-studio-auth-secret-v1';
+  const verified = await verifySessionToken(token, secret);
+  if (verified && verified.id) {
+    return {
+      id: verified.id,
+      email: verified.email,
+      name: verified.name,
+      picture: verified.picture || ''
+    };
+  }
 
-  return session || null;
+  // 2. Check DB sessions table for legacy or DB-persisted tokens
+  const now = Date.now();
+  try {
+    const session = await db.prepare(`
+      SELECT u.id, u.email, u.name, u.picture
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.token = ? AND s.expires_at > ?
+    `).bind(token, now).first();
+
+    return session || null;
+  } catch (err) {
+    console.warn('Session DB lookup failed:', err);
+    return null;
+  }
 }
 
 async function verifyGoogleIdToken(idToken, env) {
@@ -399,7 +490,7 @@ export default {
 
       // GET /api/auth/me
       if (url.pathname === '/api/auth/me' && request.method === 'GET') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         return jsonResponse({ user });
       }
 
@@ -424,14 +515,29 @@ export default {
 
         await seedUserMaterialsIfEmpty(db, profile.id);
 
-        const token = generateSessionToken();
+        const secret = (env && env.SESSION_SECRET) || 'lingua-studio-auth-secret-v1';
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
-        await db.prepare(
-          'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
-        ).bind(token, profile.id, expiresAt).run();
+        const token = await signSessionToken({
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+          exp: expiresAt
+        }, secret);
+
+        try {
+          await db.prepare(
+            'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
+          ).bind(token, profile.id, expiresAt).run();
+        } catch (e) {
+          console.warn('Session DB insert warning:', e);
+        }
 
         return jsonResponse(
-          { user: { id: profile.id, email: profile.email, name: profile.name, picture: profile.picture } },
+          {
+            user: { id: profile.id, email: profile.email, name: profile.name, picture: profile.picture },
+            token
+          },
           200,
           { 'Set-Cookie': createSessionCookie(token, 30 * 24 * 60 * 60, isSecure) }
         );
@@ -462,14 +568,29 @@ export default {
 
         await seedUserMaterialsIfEmpty(db, devUserId);
 
-        const token = generateSessionToken();
+        const secret = (env && env.SESSION_SECRET) || 'lingua-studio-auth-secret-v1';
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-        await db.prepare(
-          'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
-        ).bind(token, devUserId, expiresAt).run();
+        const token = await signSessionToken({
+          id: devUserId,
+          email: devEmail,
+          name: devName,
+          picture: devPicture,
+          exp: expiresAt
+        }, secret);
+
+        try {
+          await db.prepare(
+            'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
+          ).bind(token, devUserId, expiresAt).run();
+        } catch (e) {
+          console.warn('Session DB insert warning:', e);
+        }
 
         return jsonResponse(
-          { user: { id: devUserId, email: devEmail, name: devName, picture: devPicture } },
+          {
+            user: { id: devUserId, email: devEmail, name: devName, picture: devPicture },
+            token
+          },
           200,
           { 'Set-Cookie': createSessionCookie(token, 30 * 24 * 60 * 60, isSecure) }
         );
@@ -478,9 +599,19 @@ export default {
       // POST /api/auth/logout
       if (url.pathname === '/api/auth/logout' && request.method === 'POST') {
         const cookies = parseCookies(request);
-        const token = cookies['ls_session'];
+        let token = cookies['ls_session'];
+        if (!token) {
+          const authHeader = request.headers.get('Authorization');
+          if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.slice(7).trim();
+          }
+        }
         if (token) {
-          await db.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
+          try {
+            await db.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
+          } catch (e) {
+            console.warn('Session delete warning:', e);
+          }
         }
         return jsonResponse(
           { success: true },
@@ -493,7 +624,7 @@ export default {
 
       // GET /api/materials
       if (url.pathname === '/api/materials' && request.method === 'GET') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -510,7 +641,7 @@ export default {
 
       // POST /api/materials
       if (url.pathname === '/api/materials' && request.method === 'POST') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -553,7 +684,7 @@ export default {
 
       // PUT /api/materials/:id
       if (url.pathname.startsWith('/api/materials/') && request.method === 'PUT') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -598,7 +729,7 @@ export default {
 
       // DELETE /api/materials/:id
       if (url.pathname.startsWith('/api/materials/') && request.method === 'DELETE') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -618,7 +749,7 @@ export default {
 
       // POST /api/materials/restore-defaults
       if (url.pathname === '/api/materials/restore-defaults' && request.method === 'POST') {
-        const user = await getAuthenticatedUser(request, db);
+        const user = await getAuthenticatedUser(request, db, env);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }

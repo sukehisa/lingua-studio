@@ -11,12 +11,12 @@
       "binding": "DB",
       "database_name": "lingua_studio_db",
       "database_id": "70546f63-8a4c-45a0-a378-e05110323301",
-      "preview_database_id": "70546f63-8a4c-45a0-a378-e05110323301",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
     "GOOGLE_CLIENT_ID": "",
     "DEV_MODE": "true"
-  }
+  },
+  "previews": {}
 }

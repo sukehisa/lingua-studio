@@ -163,22 +163,37 @@
       display: none;
     }
     @media (max-width: 1023px) {
-      body.has-mini-player,
-      body.has-mini-speaking {
+      body.has-mini-player {
         padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
       }
-      body.has-mini-player #toast-container,
-      body.has-mini-speaking #toast-container {
+      body.has-mini-speaking {
+        padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe {
+        padding-bottom: calc(10.5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-player #toast-container {
         bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking #toast-container {
+        bottom: calc(7rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe #toast-container {
+        bottom: calc(11.5rem + env(safe-area-inset-bottom));
       }
     }
     @media (max-width: 767px) {
       body {
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       }
-      body.has-mini-player,
-      body.has-mini-speaking {
+      body.has-mini-player {
         padding-bottom: calc(8.75rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking {
+        padding-bottom: calc(9.5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe {
+        padding-bottom: calc(14rem + env(safe-area-inset-bottom));
       }
       #mobile-mini-player,
       #mobile-mini-speaking-panel {
@@ -188,9 +203,14 @@
       #toast-container {
         bottom: calc(5rem + env(safe-area-inset-bottom));
       }
-      body.has-mini-player #toast-container,
-      body.has-mini-speaking #toast-container {
+      body.has-mini-player #toast-container {
         bottom: calc(10rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking #toast-container {
+        bottom: calc(10.5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe #toast-container {
+        bottom: calc(15rem + env(safe-area-inset-bottom));
       }
     }
   </style>
@@ -358,35 +378,50 @@
   </div>
 
   <!-- Mini speaking control panel (speaking tab, < lg) -->
-  <div id="mobile-mini-speaking-panel" class="lg:hidden fixed inset-x-0 z-30 bg-slate-900/95 backdrop-blur-md text-white border-t border-slate-800 shadow-[0_-4px_14px_rgba(0,0,0,0.15)]">
-    <div class="h-1 bg-slate-700">
+  <div id="mobile-mini-speaking-panel" class="lg:hidden fixed inset-x-0 z-30 bg-slate-900/95 backdrop-blur-md text-white border-t border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] transition-all duration-200">
+    <div class="h-1 bg-slate-800">
       <div id="mini-speaking-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
     </div>
-    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2">
-      <!-- Top info bar: Sentence Counter, Live transcription / status, Mode Toggle, Model Voice Button -->
-      <div class="flex items-center justify-between gap-1.5 text-[11px] px-0.5 mb-1.5">
-        <!-- Sentence Counter -->
-        <span id="speaking-mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide shrink-0">0 / 0 句</span>
-
-        <!-- Live status / transcription preview -->
-        <div id="speaking-mini-live-status" class="truncate text-slate-300 text-[11px] text-center flex-1 px-1 font-medium">
-          スタンバイ（マイクで録音開始）
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2 space-y-1.5">
+      <!-- Top info bar: Sentence Counter, Sample Voice Button, Mode Toggle -->
+      <div class="flex items-center justify-between gap-1.5 text-[11px] px-0.5">
+        <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Sentence Counter -->
+          <span id="speaking-mini-sentence-counter" class="font-mono text-slate-300 font-bold px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/80 shrink-0">0 / 0 句</span>
+          <!-- Sample Voice Button -->
+          <button onclick="playSpeakingTargetVoice()" aria-label="お手本音声を聞く" class="font-mono text-[11px] text-amber-300 hover:text-amber-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
+            <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"></path></svg>
+            <span class="text-[10px]">お手本</span>
+          </button>
         </div>
 
         <!-- Mode Toggle Button (Tap to switch between Transcribe and Audio Record) -->
         <button id="mini-speaking-mode-toggle-btn" onclick="toggleSpeakingInputMode()" title="入力モードを切替 (文字起こし / 録音)" class="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/80 text-[10px] shrink-0 active:scale-95 transition-all">
           <span class="text-rose-400 font-bold">🎙️ 文字起こし</span>
         </button>
+      </div>
 
-        <!-- Sample Voice Button -->
-        <button onclick="playSpeakingTargetVoice()" aria-label="お手本音声を聞く" class="font-mono text-[11px] text-amber-300 hover:text-amber-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
-          <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"></path></svg>
-          <span class="text-[10px]">お手本</span>
-        </button>
+      <!-- Real-time Transcription Expanded Box (shown in transcribe mode) -->
+      <div id="mini-speaking-transcribe-box-container" class="relative bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 shadow-inner">
+        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
+          <span class="flex items-center gap-1.5 font-semibold text-rose-400">
+            <span id="mini-transcribe-pulse" class="w-2 h-2 rounded-full bg-rose-500 animate-ping hidden"></span>
+            <span id="mini-transcribe-badge">リアルタイム文字起こし</span>
+          </span>
+          <span id="mini-transcribe-char-count" class="font-mono text-slate-500 text-[10px]"></span>
+        </div>
+        <div id="speaking-mini-live-status" class="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words transition-colors">
+          「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...
+        </div>
+      </div>
+
+      <!-- Audio Record Mode Status (shown in audio mode) -->
+      <div id="mini-speaking-audio-box-container" class="hidden text-center py-1 text-xs text-slate-300 font-medium">
+        <span id="speaking-mini-audio-status">スタンバイ（マイクで自分の声を録音）</span>
       </div>
 
       <!-- Main Controls Row: [< 前の文] [制限タイマー] | [マイク録音 (中央)] | [最新録音再生] [次の文 >] -->
-      <div class="flex items-center justify-between px-1 sm:px-6">
+      <div class="flex items-center justify-between px-1 sm:px-6 pt-0.5">
         <!-- Left group: [< 前の文] & [制限タイマー設定] -->
         <div class="flex-1 flex items-center justify-end gap-2 sm:gap-3">
           <!-- Previous sentence button -->
@@ -2288,6 +2323,22 @@
           : '<span class="text-blue-400 font-bold">📼 録音</span>';
       }
 
+      const transcribeBox = document.getElementById('mini-speaking-transcribe-box-container');
+      const audioBox = document.getElementById('mini-speaking-audio-box-container');
+      if (transcribeBox && audioBox) {
+        if (isTranscribe) {
+          transcribeBox.classList.remove('hidden');
+          audioBox.classList.add('hidden');
+        } else {
+          transcribeBox.classList.add('hidden');
+          audioBox.classList.remove('hidden');
+        }
+      }
+
+      if (currentTab === 'speaking') {
+        document.body.classList.toggle('mini-speaking-transcribe', isTranscribe);
+      }
+
       const statusLabel = document.getElementById('record-status-label');
       if (statusLabel && !isRecording) {
         statusLabel.textContent = isTranscribe ? '「録音開始」を押して話すとリアルタイムで文字起こしされます' : '「録音開始」を押して話すと自分の声が録音されます';
@@ -2301,9 +2352,57 @@
 
       const miniStatus = document.getElementById('speaking-mini-live-status');
       if (miniStatus && !isRecording && !liveTranscription) {
-        miniStatus.textContent = isTranscribe ? 'スタンバイ（マイクで文字起こし開始）' : 'スタンバイ（マイクで録音開始）';
+        miniStatus.textContent = '「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...';
+        miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
         miniStatus.title = '';
       }
+
+      const audioStatus = document.getElementById('speaking-mini-audio-status');
+      if (audioStatus && !isRecording) {
+        audioStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 「最新再生」ボタンで聞き返せます' : 'スタンバイ（マイクで自分の声を録音）';
+      }
+    }
+
+    /**
+     * Updates the expanded mini player real-time transcription display.
+     * Highlights in-flight speech and automatically keeps latest words in view.
+     */
+    function updateMiniTranscriptionDisplay(displayText, interim) {
+      const miniStatus = document.getElementById('speaking-mini-live-status');
+      const badge = document.getElementById('mini-transcribe-badge');
+      const pulse = document.getElementById('mini-transcribe-pulse');
+      const charCount = document.getElementById('mini-transcribe-char-count');
+      if (!miniStatus) return;
+
+      if (!displayText) {
+        miniStatus.textContent = 'マイクに向かって話してください...';
+        miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+        if (badge) badge.textContent = '音声認識中';
+        if (pulse) pulse.classList.remove('hidden');
+        if (charCount) charCount.textContent = '';
+        return;
+      }
+
+      if (pulse) pulse.classList.remove('hidden');
+      if (badge) badge.textContent = isRecording ? 'リアルタイム認識中' : '文字起こし完了';
+
+      if (charCount) {
+        const countText = currentAppLang === 'zh' ? `${displayText.length} 字` : `${displayText.split(/\s+/).filter(Boolean).length} 語`;
+        charCount.textContent = countText;
+      }
+
+      if (interim) {
+        const finalPart = accumulatedTranscription ? accumulatedTranscription + ' ' : '';
+        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(finalPart)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(interim)}</span>`;
+      } else {
+        miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(displayText)}</span>`;
+      }
+
+      miniStatus.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+      miniStatus.title = displayText;
+
+      // Automatically keep the latest spoken words scrolled into view
+      miniStatus.scrollTop = miniStatus.scrollHeight;
     }
 
     /**
@@ -2424,19 +2523,19 @@
             box.textContent = '🟢 音声を認識中... マイクに向かって話してください';
             box.className = 'text-emerald-700 text-sm min-h-[50px] leading-relaxed font-medium';
           }
-          const miniStatus = document.getElementById('speaking-mini-live-status');
-          if (miniStatus && isRecording && !liveTranscription) {
-            miniStatus.textContent = '🟢 音声を認識中...';
-            miniStatus.title = '';
+          if (isRecording && !liveTranscription) {
+            updateMiniTranscriptionDisplay('', '');
           }
         };
 
         speechRecognizer.onspeechstart = () => {
           const miniStatus = document.getElementById('speaking-mini-live-status');
+          const badge = document.getElementById('mini-transcribe-badge');
           if (miniStatus && isRecording && !liveTranscription) {
             miniStatus.textContent = '🎙️ 音声を検知中...';
             miniStatus.title = '';
           }
+          if (badge) badge.textContent = '音声検知中';
         };
 
         speechRecognizer.onresult = (event) => {
@@ -2464,11 +2563,8 @@
             box.className = 'text-slate-900 text-sm min-h-[50px] leading-relaxed font-medium';
           }
 
-          const miniStatus = document.getElementById('speaking-mini-live-status');
-          if (miniStatus && isRecording) {
-            const recentSnippet = getRecentTranscriptForMini(displayText, currentAppLang);
-            miniStatus.textContent = recentSnippet ? `🎙️ ${recentSnippet}` : '🟢 音声を認識中...';
-            miniStatus.title = displayText;
+          if (isRecording) {
+            updateMiniTranscriptionDisplay(displayText, interim);
           }
         };
 
@@ -2718,23 +2814,39 @@
       }
 
       if (miniStatus) {
+        const badge = document.getElementById('mini-transcribe-badge');
+        const pulse = document.getElementById('mini-transcribe-pulse');
+        const audioStatus = document.getElementById('speaking-mini-audio-status');
+
         if (rec) {
-          miniStatus.textContent = speakingInputMode === 'transcribe' ? '🟢 音声を認識中...' : '🔴 録音中... (タップで停止)';
-          miniStatus.title = '';
+          if (speakingInputMode === 'transcribe') {
+            miniStatus.textContent = '🟢 音声を認識中... マイクに向かって話してください';
+            miniStatus.className = 'text-xs sm:text-sm text-emerald-400 font-medium min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+            miniStatus.title = '';
+            if (badge) badge.textContent = '音声認識中';
+            if (pulse) pulse.classList.remove('hidden');
+          } else {
+            if (audioStatus) audioStatus.textContent = '🔴 録音中... (タップで停止)';
+          }
         } else {
           if (speakingInputMode === 'transcribe') {
-            const lastRecorded = recordedAudios.length > 0 ? recordedAudios[0] : null;
-            if (lastRecorded && lastRecorded.text && lastRecorded.text !== '（文字起こし結果なし）') {
-              const snippet = getRecentTranscriptForMini(lastRecorded.text, currentAppLang);
-              miniStatus.textContent = `完了: ${snippet}`;
-              miniStatus.title = lastRecorded.text;
+            if (pulse) pulse.classList.add('hidden');
+            if (badge) badge.textContent = recordedAudios.length > 0 && liveTranscription ? '文字起こし完了' : 'リアルタイム文字起こし';
+
+            if (liveTranscription) {
+              miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(liveTranscription)}</span>`;
+              miniStatus.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+              miniStatus.title = liveTranscription;
+              miniStatus.scrollTop = miniStatus.scrollHeight;
             } else {
-              miniStatus.textContent = 'スタンバイ（マイクで文字起こし開始）';
+              miniStatus.textContent = '「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...';
+              miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
               miniStatus.title = '';
             }
           } else {
-            miniStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 最新結果を再生可能' : 'スタンバイ（マイクで録音開始）';
-            miniStatus.title = '';
+            if (audioStatus) {
+              audioStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 「最新再生」ボタンで聞き返せます' : 'スタンバイ（マイクで自分の声を録音）';
+            }
           }
         }
       }
@@ -3380,6 +3492,7 @@
       currentTab = tab;
       document.body.classList.toggle('has-mini-player', tab === 'listening');
       document.body.classList.toggle('has-mini-speaking', tab === 'speaking');
+      document.body.classList.toggle('mini-speaking-transcribe', tab === 'speaking' && speakingInputMode === 'transcribe');
       if (tab === 'speaking') {
         checkMobileBrowserSpeechSupport();
         updateSpeakingInputModeUI();

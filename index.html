@@ -816,7 +816,10 @@
       </div>
 
       <div id="dev-login-section" class="pt-3 border-t border-dashed border-slate-200 hidden">
-        <div class="text-[11px] font-semibold text-slate-500 mb-2">🛠️ 開発・テスト用ワンクリックログイン</div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[11px] font-semibold text-slate-500">🛠️ 開発・プレビュー用ログイン</div>
+          <span id="dev-d1-status" class="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 hidden"></span>
+        </div>
         <button onclick="handleDevLogin()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-1.5">
           <span>デモユーザーとしてログイン</span>
         </button>
@@ -1108,6 +1111,18 @@
       if (devSection) {
         if (authConfig.devMode || !authConfig.googleClientId) {
           devSection.classList.remove('hidden');
+          const d1Status = document.getElementById('dev-d1-status');
+          if (d1Status) {
+            if (authConfig.isD1Bound === false) {
+              d1Status.textContent = 'メモリDB (プレビュー)';
+              d1Status.className = 'text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200';
+              d1Status.classList.remove('hidden');
+            } else {
+              d1Status.textContent = 'D1 接続済み';
+              d1Status.className = 'text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200';
+              d1Status.classList.remove('hidden');
+            }
+          }
         } else {
           devSection.classList.add('hidden');
         }

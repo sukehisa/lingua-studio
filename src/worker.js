@@ -1,9 +1,194 @@
 /**
  * LinguaStudio - Cloudflare Worker Entrypoint
  * Handles User Auth (Google SSO) & Per-User Material CRUD with Cloudflare D1
+ * Includes automatic in-memory fallback for preview environments where D1 binding is not yet attached.
  */
 
-import defaultMaterials from './default-materials.json';
+import defaultMaterials from './default-materials.js';
+
+// In-memory fallback database for preview/dev deployments before D1 database is bound
+class MemoryDb {
+  constructor() {
+    this.users = new Map();
+    this.sessions = new Map();
+    this.materials = new Map();
+  }
+
+  prepare(query) {
+    const self = this;
+    return {
+      _query: query,
+      _args: [],
+      bind(...args) {
+        this._args = args;
+        return this;
+      },
+      async first() {
+        const q = this._query.replace(/\s+/g, ' ').trim();
+        const args = this._args;
+
+        if (q.includes('COUNT(*) as count FROM materials WHERE user_id = ?')) {
+          const userId = args[0];
+          let count = 0;
+          for (const m of self.materials.values()) {
+            if (m.user_id === userId) count++;
+          }
+          return { count };
+        }
+
+        if (q.includes('FROM sessions s') && q.includes('JOIN users u')) {
+          const token = args[0];
+          const now = args[1];
+          const session = self.sessions.get(token);
+          if (session && session.expires_at > now) {
+            const user = self.users.get(session.user_id);
+            if (user) {
+              return { id: user.id, email: user.email, name: user.name, picture: user.picture };
+            }
+          }
+          return null;
+        }
+
+        return null;
+      },
+      async all() {
+        const q = this._query.replace(/\s+/g, ' ').trim();
+        const args = this._args;
+
+        if (q.includes('FROM materials') && q.includes('WHERE user_id = ?')) {
+          const userId = args[0];
+          const list = [];
+          for (const m of self.materials.values()) {
+            if (m.user_id === userId) {
+              list.push({
+                id: m.id,
+                title: m.title,
+                titleEn: m.title_en,
+                tag: m.tag,
+                chinese: m.chinese,
+                english: m.english,
+                translation: m.translation,
+                createdAt: m.created_at,
+                updatedAt: m.updated_at
+              });
+            }
+          }
+          list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '') || (b.id || '').localeCompare(a.id || ''));
+          return { results: list };
+        }
+
+        return { results: [] };
+      },
+      async run() {
+        const q = this._query.replace(/\s+/g, ' ').trim();
+        const args = this._args;
+
+        if (q.startsWith('CREATE TABLE') || q.startsWith('CREATE INDEX')) {
+          return { meta: { changes: 0 } };
+        }
+
+        if (q.includes('INSERT INTO users')) {
+          const [id, email, name, picture] = args;
+          const existing = self.users.get(id);
+          self.users.set(id, {
+            id,
+            email,
+            name: name || existing?.name || email.split('@')[0],
+            picture: picture || existing?.picture || '',
+            created_at: existing?.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          return { meta: { changes: 1 } };
+        }
+
+        if (q.includes('INSERT INTO sessions')) {
+          const [token, user_id, expires_at] = args;
+          self.sessions.set(token, {
+            token,
+            user_id,
+            expires_at,
+            created_at: new Date().toISOString()
+          });
+          return { meta: { changes: 1 } };
+        }
+
+        if (q.includes('DELETE FROM sessions WHERE token = ?')) {
+          const token = args[0];
+          const deleted = self.sessions.delete(token);
+          return { meta: { changes: deleted ? 1 : 0 } };
+        }
+
+        if (q.includes('INSERT OR IGNORE INTO materials') || q.includes('INSERT OR REPLACE INTO materials') || q.includes('INSERT INTO materials')) {
+          const [user_id, id, title, title_en, tag, chinese, english, translation, created_at, updated_at] = args;
+          const key = `${user_id}:${id}`;
+          if (q.includes('OR IGNORE') && self.materials.has(key)) {
+            return { meta: { changes: 0 } };
+          }
+          self.materials.set(key, {
+            user_id,
+            id,
+            title,
+            title_en,
+            tag,
+            chinese,
+            english,
+            translation,
+            created_at,
+            updated_at
+          });
+          return { meta: { changes: 1 } };
+        }
+
+        if (q.includes('UPDATE materials')) {
+          const [title, title_en, tag, chinese, english, translation, updated_at, user_id, id] = args;
+          const key = `${user_id}:${id}`;
+          const existing = self.materials.get(key);
+          if (!existing) {
+            return { meta: { changes: 0 } };
+          }
+          self.materials.set(key, {
+            ...existing,
+            title,
+            title_en,
+            tag,
+            chinese,
+            english,
+            translation,
+            updated_at
+          });
+          return { meta: { changes: 1 } };
+        }
+
+        if (q.includes('DELETE FROM materials')) {
+          const [user_id, id] = args;
+          const key = `${user_id}:${id}`;
+          const deleted = self.materials.delete(key);
+          return { meta: { changes: deleted ? 1 : 0 } };
+        }
+
+        return { meta: { changes: 0 } };
+      }
+    };
+  }
+
+  async batch(statements) {
+    const results = [];
+    for (const stmt of statements) {
+      results.push(await stmt.run());
+    }
+    return results;
+  }
+}
+
+const memoryDbInstance = new MemoryDb();
+
+function getDb(env) {
+  if (env && env.DB) {
+    return env.DB;
+  }
+  console.warn('env.DB binding is missing; falling back to in-memory store for preview/dev mode.');
+  return memoryDbInstance;
+}
 
 let schemaInitialized = false;
 
@@ -115,7 +300,7 @@ function createSessionCookie(token, maxAgeSeconds, isSecure) {
   return cookie;
 }
 
-async function getAuthenticatedUser(request, env) {
+async function getAuthenticatedUser(request, db) {
   const cookies = parseCookies(request);
   let token = cookies['ls_session'];
 
@@ -129,7 +314,7 @@ async function getAuthenticatedUser(request, env) {
   if (!token) return null;
 
   const now = Date.now();
-  const session = await env.DB.prepare(`
+  const session = await db.prepare(`
     SELECT u.id, u.email, u.name, u.picture
     FROM sessions s
     JOIN users u ON s.user_id = u.id
@@ -196,11 +381,9 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    if (!env.DB) {
-      return jsonResponse({ error: 'Database binding (DB) is missing in worker configuration' }, 500);
-    }
+    const db = getDb(env);
 
-    await ensureSchema(env.DB);
+    await ensureSchema(db);
 
     const isSecure = url.protocol === 'https:';
 
@@ -209,13 +392,14 @@ export default {
       if (url.pathname === '/api/auth/config' && request.method === 'GET') {
         return jsonResponse({
           googleClientId: env.GOOGLE_CLIENT_ID || '',
-          devMode: env.DEV_MODE === 'true' || !env.GOOGLE_CLIENT_ID
+          devMode: env.DEV_MODE === 'true' || !env.GOOGLE_CLIENT_ID,
+          isD1Bound: Boolean(env && env.DB)
         });
       }
 
       // GET /api/auth/me
       if (url.pathname === '/api/auth/me' && request.method === 'GET') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         return jsonResponse({ user });
       }
 
@@ -228,7 +412,7 @@ export default {
 
         const profile = await verifyGoogleIdToken(body.credential, env);
 
-        await env.DB.prepare(`
+        await db.prepare(`
           INSERT INTO users (id, email, name, picture, updated_at)
           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(id) DO UPDATE SET
@@ -238,11 +422,11 @@ export default {
             updated_at = CURRENT_TIMESTAMP
         `).bind(profile.id, profile.email, profile.name, profile.picture).run();
 
-        await seedUserMaterialsIfEmpty(env.DB, profile.id);
+        await seedUserMaterialsIfEmpty(db, profile.id);
 
         const token = generateSessionToken();
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
-        await env.DB.prepare(
+        await db.prepare(
           'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
         ).bind(token, profile.id, expiresAt).run();
 
@@ -266,7 +450,7 @@ export default {
         const devName = body.name || 'Google テストユーザー';
         const devPicture = body.picture || 'https://lh3.googleusercontent.com/a/default-user';
 
-        await env.DB.prepare(`
+        await db.prepare(`
           INSERT INTO users (id, email, name, picture, updated_at)
           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(id) DO UPDATE SET
@@ -276,11 +460,11 @@ export default {
             updated_at = CURRENT_TIMESTAMP
         `).bind(devUserId, devEmail, devName, devPicture).run();
 
-        await seedUserMaterialsIfEmpty(env.DB, devUserId);
+        await seedUserMaterialsIfEmpty(db, devUserId);
 
         const token = generateSessionToken();
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-        await env.DB.prepare(
+        await db.prepare(
           'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
         ).bind(token, devUserId, expiresAt).run();
 
@@ -296,7 +480,7 @@ export default {
         const cookies = parseCookies(request);
         const token = cookies['ls_session'];
         if (token) {
-          await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
+          await db.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
         }
         return jsonResponse(
           { success: true },
@@ -309,12 +493,12 @@ export default {
 
       // GET /api/materials
       if (url.pathname === '/api/materials' && request.method === 'GET') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
 
-        const { results } = await env.DB.prepare(`
+        const { results } = await db.prepare(`
           SELECT id, title, title_en as titleEn, tag, chinese, english, translation, created_at as createdAt, updated_at as updatedAt
           FROM materials
           WHERE user_id = ?
@@ -326,7 +510,7 @@ export default {
 
       // POST /api/materials
       if (url.pathname === '/api/materials' && request.method === 'POST') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -347,7 +531,7 @@ export default {
         const translation = body.translation?.trim() || '';
         const now = new Date().toISOString().slice(0, 10);
 
-        await env.DB.prepare(`
+        await db.prepare(`
           INSERT INTO materials (user_id, id, title, title_en, tag, chinese, english, translation, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(user.id, id, title, titleEn, tag, chinese, english, translation, now, now).run();
@@ -369,7 +553,7 @@ export default {
 
       // PUT /api/materials/:id
       if (url.pathname.startsWith('/api/materials/') && request.method === 'PUT') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
@@ -388,7 +572,7 @@ export default {
         const translation = body.translation?.trim() || '';
         const now = new Date().toISOString().slice(0, 10);
 
-        const res = await env.DB.prepare(`
+        const res = await db.prepare(`
           UPDATE materials
           SET title = ?, title_en = ?, tag = ?, chinese = ?, english = ?, translation = ?, updated_at = ?
           WHERE user_id = ? AND id = ?
@@ -414,13 +598,13 @@ export default {
 
       // DELETE /api/materials/:id
       if (url.pathname.startsWith('/api/materials/') && request.method === 'DELETE') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
 
         const materialId = decodeURIComponent(url.pathname.replace('/api/materials/', ''));
-        const res = await env.DB.prepare(`
+        const res = await db.prepare(`
           DELETE FROM materials
           WHERE user_id = ? AND id = ?
         `).bind(user.id, materialId).run();
@@ -434,14 +618,14 @@ export default {
 
       // POST /api/materials/restore-defaults
       if (url.pathname === '/api/materials/restore-defaults' && request.method === 'POST') {
-        const user = await getAuthenticatedUser(request, env);
+        const user = await getAuthenticatedUser(request, db);
         if (!user) {
           return jsonResponse({ error: '認証が必要です' }, 401);
         }
 
         const now = new Date().toISOString().slice(0, 10);
         const statements = defaultMaterials.map(item => {
-          return env.DB.prepare(`
+          return db.prepare(`
             INSERT OR REPLACE INTO materials (
               user_id, id, title, title_en, tag, chinese, english, translation, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -459,9 +643,9 @@ export default {
           );
         });
 
-        await env.DB.batch(statements);
+        await db.batch(statements);
 
-        const { results } = await env.DB.prepare(`
+        const { results } = await db.prepare(`
           SELECT id, title, title_en as titleEn, tag, chinese, english, translation, created_at as createdAt, updated_at as updatedAt
           FROM materials
           WHERE user_id = ?

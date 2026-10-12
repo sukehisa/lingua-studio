@@ -2365,29 +2365,134 @@
     }
 
     /**
-     * Joins two transcript parts cleanly with language-appropriate spacing.
+     * Cleans whitespace in a transcript string.
+     */
+    function cleanTranscript(s) {
+      return (s || '').trim().replace(/\s+/g, ' ');
+    }
+
+    /**
+     * Joins two transcript parts cleanly with language-appropriate spacing
+     * and intelligent overlap de-duplication to prevent repeated phrases across
+     * Web Speech API result events, interim streams, and session restarts.
      */
     function joinTranscripts(part1, part2, lang) {
-      if (!part1) return (part2 || '').trim();
-      if (!part2) return (part1 || '').trim();
-      const p1 = part1.trim();
-      const p2 = part2.trim();
+      const p1 = cleanTranscript(part1);
+      const p2 = cleanTranscript(part2);
       if (!p1) return p2;
       if (!p2) return p1;
+      if (p1.toLowerCase() === p2.toLowerCase()) return p1;
 
-      if ((lang || currentAppLang) === 'zh') {
-        const p1EndsWithAscii = /[a-zA-Z0-9]$/.test(p1);
-        const p2StartsWithAscii = /^[a-zA-Z0-9]/.test(p2);
-        if (p1EndsWithAscii || p2StartsWithAscii) {
-          return `${p1} ${p2}`.replace(/\s+/g, ' ');
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. Superset: p2 starts with p1 (e.g. p1="Hello", p2="Hello world" or p1="你好", p2="你好世界")
+      if (p2.toLowerCase().startsWith(p1.toLowerCase())) {
+        return p2;
+      }
+
+      // 2. Subsumed: p1 already ends with p2 (e.g. p1="Hello world", p2="world" or p1="你好世界", p2="世界")
+      if (p1.toLowerCase().endsWith(p2.toLowerCase())) {
+        return p1;
+      }
+
+      // 3. Partial overlap: suffix of p1 matches prefix of p2
+      const maxCheckLen = Math.min(p1.length, p2.length);
+      let bestOverlap = 0;
+
+      for (let len = 1; len <= maxCheckLen; len++) {
+        const s1 = p1.slice(-len);
+        const s2 = p2.slice(0, len);
+        if (s1.toLowerCase() === s2.toLowerCase()) {
+          if (!isZh) {
+            // Must be whole word boundary in English/Latin
+            const charBefore = p1.length - len > 0 ? p1[p1.length - len - 1] : ' ';
+            const charAfter = len < p2.length ? p2[len] : ' ';
+            if ((charBefore === ' ' || p1.length === len) && (charAfter === ' ' || p2.length === len)) {
+              bestOverlap = len;
+            }
+          } else {
+            // For Chinese partial overlap, require at least 2 chars unless one text is 1 char
+            if (len >= 2 || p1.length === 1 || p2.length === 1) {
+              bestOverlap = len;
+            }
+          }
         }
+      }
+
+      if (bestOverlap > 0) {
+        const remaining = p2.slice(bestOverlap).trim();
+        if (!remaining) return p1;
+        if (isZh) {
+          const p1Ascii = /[a-zA-Z0-9]$/.test(p1);
+          const p2Ascii = /^[a-zA-Z0-9]/.test(remaining);
+          if (p1Ascii || p2Ascii) return `${p1} ${remaining}`;
+          return `${p1}${remaining}`;
+        } else {
+          return `${p1} ${remaining}`;
+        }
+      }
+
+      // 4. No overlap: concatenate with language-appropriate spacing
+      if (isZh) {
+        const p1Ascii = /[a-zA-Z0-9]$/.test(p1);
+        const p2Ascii = /^[a-zA-Z0-9]/.test(p2);
+        if (p1Ascii || p2Ascii) return `${p1} ${p2}`;
         return `${p1}${p2}`;
       } else {
-        if (/^[.,!?;:]/.test(p2)) {
-          return `${p1}${p2}`.replace(/\s+/g, ' ');
-        }
-        return `${p1} ${p2}`.replace(/\s+/g, ' ');
+        if (/^[.,!?;:]/.test(p2)) return `${p1}${p2}`;
+        return `${p1} ${p2}`;
       }
+    }
+
+    /**
+     * Extracts only the unfinalized delta of interim text relative to finalized text,
+     * ensuring that words already present in finalPart are not duplicated in the interim highlight.
+     */
+    function extractDeltaInterim(finalText, interimText, lang) {
+      const f = cleanTranscript(finalText);
+      const i = cleanTranscript(interimText);
+      if (!i) return '';
+      if (!f) return i;
+      if (f.toLowerCase() === i.toLowerCase()) return '';
+
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. interim starts with final
+      if (i.toLowerCase().startsWith(f.toLowerCase())) {
+        return i.slice(f.length).trim();
+      }
+
+      // 2. final already ends with interim
+      if (f.toLowerCase().endsWith(i.toLowerCase())) {
+        return '';
+      }
+
+      // 3. suffix of final matches prefix of interim
+      const maxCheckLen = Math.min(f.length, i.length);
+      let bestOverlap = 0;
+      for (let len = 1; len <= maxCheckLen; len++) {
+        const sf = f.slice(-len);
+        const si = i.slice(0, len);
+        if (sf.toLowerCase() === si.toLowerCase()) {
+          if (!isZh) {
+            const charBefore = f.length - len > 0 ? f[f.length - len - 1] : ' ';
+            const charAfter = len < i.length ? i[len] : ' ';
+            if ((charBefore === ' ' || f.length === len) && (charAfter === ' ' || i.length === len)) {
+              bestOverlap = len;
+            }
+          } else {
+            if (len >= 2 || f.length === 1 || i.length === 1) {
+              bestOverlap = len;
+            }
+          }
+        }
+      }
+
+      if (bestOverlap > 0) {
+        return i.slice(bestOverlap).trim();
+      }
+
+      return i;
     }
 
     /**
@@ -2418,18 +2523,20 @@
         charCount.textContent = countText;
       }
 
-      if (interim) {
+      const deltaInterim = extractDeltaInterim(finalPart, interim, currentAppLang);
+
+      if (deltaInterim) {
         let formattedFinal = '';
         if (finalPart) {
           if (currentAppLang === 'zh') {
             const endsWithAscii = /[a-zA-Z0-9]$/.test(finalPart);
-            const startsWithAscii = /^[a-zA-Z0-9]/.test(interim);
+            const startsWithAscii = /^[a-zA-Z0-9]/.test(deltaInterim);
             formattedFinal = (endsWithAscii || startsWithAscii) ? finalPart + ' ' : finalPart;
           } else {
             formattedFinal = finalPart + ' ';
           }
         }
-        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(formattedFinal)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(interim)}</span>`;
+        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(formattedFinal)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(deltaInterim)}</span>`;
       } else {
         miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(displayText)}</span>`;
       }

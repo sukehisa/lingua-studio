@@ -363,8 +363,8 @@
       <div id="mini-speaking-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
     </div>
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2">
-      <!-- Top info bar: Sentence Counter, Live transcription / status, Model Voice Button -->
-      <div class="flex items-center justify-between gap-2 text-[11px] px-0.5 mb-1.5">
+      <!-- Top info bar: Sentence Counter, Live transcription / status, Mode Toggle, Model Voice Button -->
+      <div class="flex items-center justify-between gap-1.5 text-[11px] px-0.5 mb-1.5">
         <!-- Sentence Counter -->
         <span id="speaking-mini-sentence-counter" class="font-mono text-slate-300 font-semibold tracking-wide shrink-0">0 / 0 句</span>
 
@@ -372,6 +372,11 @@
         <div id="speaking-mini-live-status" class="truncate text-slate-300 text-[11px] text-center flex-1 px-1 font-medium">
           スタンバイ（マイクで録音開始）
         </div>
+
+        <!-- Mode Toggle Button (Tap to switch between Transcribe and Audio Record) -->
+        <button id="mini-speaking-mode-toggle-btn" onclick="toggleSpeakingInputMode()" title="入力モードを切替 (文字起こし / 録音)" class="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/80 text-[10px] shrink-0 active:scale-95 transition-all">
+          <span class="text-rose-400 font-bold">🎙️ 文字起こし</span>
+        </button>
 
         <!-- Sample Voice Button -->
         <button onclick="playSpeakingTargetVoice()" aria-label="お手本音声を聞く" class="font-mono text-[11px] text-amber-300 hover:text-amber-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
@@ -696,6 +701,27 @@
             <!-- Background pulse circle while recording -->
             <div id="rec-pulse-effect" class="absolute w-64 h-64 rounded-full bg-rose-500/10 recording-pulse hidden pointer-events-none"></div>
 
+            <!-- Mode Switcher: リアルタイム文字起こし vs 音声録音 -->
+            <div class="w-full flex items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-100">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">入力モード</span>
+              <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                <button id="smode-btn-transcribe" onclick="setSpeakingInputMode('transcribe')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all">
+                  <span>🎙️ リアルタイム文字起こし</span>
+                </button>
+                <button id="smode-btn-audio" onclick="setSpeakingInputMode('audio')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all">
+                  <span>📼 音声録音・再生</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- iOS Chrome / In-app browser warning banner -->
+            <div id="mobile-browser-speech-warning" class="hidden w-full text-left p-3 mb-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+              <div class="flex items-center gap-1.5 font-bold text-amber-900">
+                <span>⚠️ iOSブラウザの制約について</span>
+              </div>
+              <p>iOSのChrome、アプリ内ブラウザ（LINE/Twitter等）、およびホーム画面追加版（PWA）では、Appleの制約によりリアルタイム音声認識が制限されます。文字起こしをご利用の際は<strong>標準のSafariブラウザ（通常タブ）</strong>で開くか、上の<strong>「📼 音声録音・再生」</strong>モードをご利用ください。</p>
+            </div>
+
             <!-- Timer Settings (Seconds Selector) -->
             <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6 pb-4 border-b border-slate-100">
               <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">制限タイマー設定</span>
@@ -954,6 +980,8 @@
     let currentFinalTranscription = '';
     let liveTranscription = '';
     let latestAudioPlayer = null;
+    let speakingInputMode = 'transcribe'; // 'transcribe' (リアルタイム文字起こし) or 'audio' (マイク録音・再生)
+    let speechRestartTimeout = null;
     let editingArticleId = null;
     let currentTab = 'listening';
 
@@ -967,6 +995,8 @@
       setupSpeechRecognition();
       setupKeyboardShortcuts();
       updateTimerDisplay(timerDuration);
+      checkMobileBrowserSpeechSupport();
+      updateSpeakingInputModeUI();
       try {
         const savedFs = localStorage.getItem('lingua_font_size_level');
         if (savedFs !== null) {
@@ -2189,12 +2219,31 @@
       selectAndPlaySentence(Math.min(targetIndex, sentences.length - 1));
     }
 
+    function checkMobileBrowserSpeechSupport() {
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isIOSChrome = isIOS && /CriOS/i.test(navigator.userAgent);
+      const isIOSFirefox = isIOS && /FxiOS/i.test(navigator.userAgent);
+      const isWebview = isIOS && (!/Safari/i.test(navigator.userAgent) || /Line|FBAN|FBAV|Twitter|Instagram/i.test(navigator.userAgent));
+      const isStandalonePWA = window.navigator.standalone === true;
+
+      const banner = document.getElementById('mobile-browser-speech-warning');
+      if (banner) {
+        if (isIOSChrome || isIOSFirefox || isWebview || isStandalonePWA) {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+    }
+
     function setupSpeechRecognition() {
+      checkMobileBrowserSpeechSupport();
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const box = document.getElementById('live-transcription-text');
       if (!SpeechRecognition) {
         if (box) {
           box.textContent = '※ お使いのブラウザは音声認識機能に対応していません (Safari または Chrome をご利用ください)';
+          box.className = 'text-amber-800 text-xs p-2.5 bg-amber-50 rounded-xl border border-amber-200';
         }
         const miniStatus = document.getElementById('speaking-mini-live-status');
         if (miniStatus) {
@@ -2203,42 +2252,120 @@
       }
     }
 
+    function setSpeakingInputMode(mode) {
+      if (isRecording) {
+        showToast('録音中はモードを変更できません', 'error');
+        return;
+      }
+      speakingInputMode = mode;
+      updateSpeakingInputModeUI();
+      showToast(mode === 'transcribe' ? '「リアルタイム文字起こし」モードに切り替えました' : '「音声録音・再生」モードに切り替えました');
+    }
+
+    function toggleSpeakingInputMode() {
+      setSpeakingInputMode(speakingInputMode === 'transcribe' ? 'audio' : 'transcribe');
+    }
+
+    function updateSpeakingInputModeUI() {
+      const btnTranscribe = document.getElementById('smode-btn-transcribe');
+      const btnAudio = document.getElementById('smode-btn-audio');
+      const miniModeBtn = document.getElementById('mini-speaking-mode-toggle-btn');
+      const isTranscribe = speakingInputMode === 'transcribe';
+
+      if (btnTranscribe && btnAudio) {
+        if (isTranscribe) {
+          btnTranscribe.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all';
+          btnAudio.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all';
+        } else {
+          btnTranscribe.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all';
+          btnAudio.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all';
+        }
+      }
+
+      if (miniModeBtn) {
+        miniModeBtn.innerHTML = isTranscribe 
+          ? '<span class="text-rose-400 font-bold">🎙️ 文字起こし</span>'
+          : '<span class="text-blue-400 font-bold">📼 録音</span>';
+      }
+
+      const statusLabel = document.getElementById('record-status-label');
+      if (statusLabel && !isRecording) {
+        statusLabel.textContent = isTranscribe ? '「録音開始」を押して話すとリアルタイムで文字起こしされます' : '「録音開始」を押して話すと自分の声が録音されます';
+      }
+
+      const box = document.getElementById('live-transcription-text');
+      if (box && !isRecording && !liveTranscription) {
+        box.textContent = isTranscribe ? '発話内容がここにリアルタイムで表示されます...' : '音声録音モード：録音終了後に自分の声を聞き返せます';
+        box.className = 'text-slate-500 text-xs min-h-[50px] leading-relaxed italic';
+      }
+
+      const miniStatus = document.getElementById('speaking-mini-live-status');
+      if (miniStatus && !isRecording && !liveTranscription) {
+        miniStatus.textContent = isTranscribe ? 'スタンバイ（マイクで文字起こし開始）' : 'スタンバイ（マイクで録音開始）';
+      }
+    }
+
     function initAndStartSpeechRecognition() {
+      if (speechRestartTimeout) {
+        clearTimeout(speechRestartTimeout);
+        speechRestartTimeout = null;
+      }
+
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         console.warn('SpeechRecognition not supported in this browser');
         const box = document.getElementById('live-transcription-text');
         if (box) {
           box.textContent = '※ お使いのブラウザは音声認識機能に対応していません (Safari または Chrome をご利用ください)';
+          box.className = 'text-amber-800 text-xs p-2.5 bg-amber-50 rounded-xl border border-amber-200';
         }
-        return;
+        return false;
       }
 
       if (speechRecognizer) {
-        try { speechRecognizer.abort(); } catch (e) {}
+        try {
+          speechRecognizer.onstart = null;
+          speechRecognizer.onspeechstart = null;
+          speechRecognizer.onresult = null;
+          speechRecognizer.onerror = null;
+          speechRecognizer.onend = null;
+          speechRecognizer.abort();
+        } catch (e) {}
         speechRecognizer = null;
       }
 
       try {
         speechRecognizer = new SpeechRecognition();
         speechRecognizer.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
-        
-        // Mobile / Safari devices often fail or abort immediately if continuous is true.
-        // On those platforms, we set continuous = false and seamlessly restart in onend.
-        const isMobileOrSafari = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        speechRecognizer.continuous = !isMobileOrSafari;
+        speechRecognizer.continuous = true;
         speechRecognizer.interimResults = true;
         speechRecognizer.maxAlternatives = 1;
 
         speechRecognizer.onstart = () => {
           updateTranscriptionIndicator(true);
+          const box = document.getElementById('live-transcription-text');
+          if (box && !liveTranscription) {
+            box.textContent = '🟢 音声を認識中... マイクに向かって話してください';
+            box.className = 'text-emerald-700 text-sm min-h-[50px] leading-relaxed font-medium';
+          }
+          const miniStatus = document.getElementById('speaking-mini-live-status');
+          if (miniStatus && isRecording && !liveTranscription) {
+            miniStatus.textContent = '🟢 音声を認識中...';
+          }
+        };
+
+        speechRecognizer.onspeechstart = () => {
+          const miniStatus = document.getElementById('speaking-mini-live-status');
+          if (miniStatus && isRecording && !liveTranscription) {
+            miniStatus.textContent = '🎙️ 音声を検知中...';
+          }
         };
 
         speechRecognizer.onresult = (event) => {
           let interim = '';
           let sessionFinal = '';
 
-          for (let i = 0; i < event.results.length; ++i) {
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
               sessionFinal += event.results[i][0].transcript;
             } else {
@@ -2246,57 +2373,76 @@
             }
           }
 
-          currentFinalTranscription = sessionFinal;
-          const combined = [accumulatedTranscription, currentFinalTranscription].filter(Boolean).join(' ');
-          liveTranscription = (combined + (interim ? ' ' + interim : '')).trim();
+          if (sessionFinal) {
+            accumulatedTranscription = [accumulatedTranscription, sessionFinal].filter(Boolean).join(' ');
+          }
+
+          const displayText = (accumulatedTranscription + (interim ? ' ' + interim : '')).trim();
+          liveTranscription = displayText;
 
           const box = document.getElementById('live-transcription-text');
           if (box) {
-            box.textContent = liveTranscription || '発話内容がここにリアルタイムで表示されます...';
-            box.classList.remove('italic', 'text-slate-400');
-            box.classList.add('text-slate-900');
+            box.textContent = displayText || '発話内容がここにリアルタイムで表示されます...';
+            box.className = 'text-slate-900 text-sm min-h-[50px] leading-relaxed font-medium';
           }
 
           const miniStatus = document.getElementById('speaking-mini-live-status');
           if (miniStatus && isRecording) {
-            miniStatus.textContent = liveTranscription ? `🎙️ ${liveTranscription}` : '🔴 音声を認識中...';
+            miniStatus.textContent = displayText ? `🎙️ ${displayText}` : '🟢 音声を認識中...';
           }
         };
 
         speechRecognizer.onerror = (event) => {
           console.warn('SpeechRecognition error:', event.error);
-          if (event.error === 'not-allowed') {
-            showToast('マイク・音声認識の使用許可がありません', 'error');
+          const errorDescriptions = {
+            'not-allowed': 'マイクまたは音声認識の利用が拒否されました。設定でマイク・音声認識を許可してください。',
+            'service-not-allowed': 'このブラウザでは音声認識がサポートされていません。iOS標準のSafariでお試しいただくか、「音声録音」モードをご利用ください。',
+            'audio-capture': 'マイクの取得に失敗しました。他のアプリやタブがマイクを使用していないか確認してください。',
+            'language-not-supported': `言語（${speechRecognizer.lang}）がお使いの端末でサポートされていません。端末設定 > キーボードで言語を追加してください。`,
+            'network': '音声認識のネットワーク通信エラーです。電波状況をご確認ください。',
+            'no-speech': '音声が検出されませんでした。マイクに近づいて発話してください。'
+          };
+
+          const msg = errorDescriptions[event.error] || `音声認識エラー: ${event.error}`;
+          if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            showToast(msg, 'error');
             const box = document.getElementById('live-transcription-text');
-            if (box) box.textContent = '音声認識のマイク権限が許可されていません（ブラウザの設定を確認してください）';
-          } else if (event.error === 'network') {
-            console.warn('SpeechRecognition network issue');
+            if (box && !liveTranscription) {
+              box.textContent = `⚠️ ${msg}`;
+              box.className = 'text-rose-700 text-xs p-2.5 bg-rose-50 rounded-xl border border-rose-200';
+            }
           }
         };
 
         speechRecognizer.onend = () => {
-          // Commit finalized speech segment into accumulated transcription
-          if (currentFinalTranscription) {
-            accumulatedTranscription = [accumulatedTranscription, currentFinalTranscription].filter(Boolean).join(' ');
-            currentFinalTranscription = '';
-          }
-
-          // On mobile, speech recognition stops after pauses/sentences; restart to keep listening while timer runs!
+          // If still recording and not explicitly stopped by the user, restart after small delay
+          // (prevents rapid-fire restart deadlock on WebKit / iOS Safari)
           if (isRecording && !isExplicitlyStopping) {
-            try {
-              initAndStartSpeechRecognition();
-            } catch (err) {
-              console.warn('Auto-restart SpeechRecognition error:', err);
-              updateTranscriptionIndicator(false);
-            }
+            speechRestartTimeout = setTimeout(() => {
+              if (isRecording && !isExplicitlyStopping) {
+                try {
+                  initAndStartSpeechRecognition();
+                } catch (err) {
+                  console.warn('SpeechRecognition restart error:', err);
+                  updateTranscriptionIndicator(false);
+                }
+              }
+            }, 300);
           } else {
             updateTranscriptionIndicator(false);
           }
         };
 
         speechRecognizer.start();
+        return true;
       } catch (err) {
-        console.warn('Failed to start SpeechRecognition:', err);
+        console.warn('SpeechRecognition.start exception:', err);
+        const box = document.getElementById('live-transcription-text');
+        if (box) {
+          box.textContent = `⚠️ 音声認識の起動に失敗しました: ${err.message || err}`;
+          box.className = 'text-rose-700 text-xs p-2.5 bg-rose-50 rounded-xl border border-rose-200';
+        }
+        return false;
       }
     }
 
@@ -2308,74 +2454,100 @@
       }
     }
 
-    async function startRecordingSession() {
+    function startRecordingSession() {
       // Stop model synthesis playback and latest recording playback
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
-      if (latestAudioPlayer && !latestAudioPlayer.paused) {
+      if (latestAudioPlayer) {
         latestAudioPlayer.pause();
+        latestAudioPlayer.currentTime = 0;
         updateMiniLatestPlayIcon(false);
       }
+      document.querySelectorAll('audio').forEach(a => {
+        try { a.pause(); a.currentTime = 0; } catch (e) {}
+      });
 
       isExplicitlyStopping = false;
       isRecording = true;
+      audioChunks = [];
+      mediaRecorder = null;
+      if (audioStream) {
+        try { audioStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        audioStream = null;
+      }
       accumulatedTranscription = '';
       currentFinalTranscription = '';
       liveTranscription = '';
 
-      // 1. Start SpeechRecognition SYNCHRONOUSLY within the direct user gesture tick (vital for Safari / mobile)!
-      initAndStartSpeechRecognition();
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-      // 2. Start timer countdown and sync UI
+      // Start input according to mode
+      if (speakingInputMode === 'transcribe') {
+        // 1. Start SpeechRecognition SYNCHRONOUSLY within direct user gesture tick
+        initAndStartSpeechRecognition();
+
+        // On desktop, we can also record audio concurrently in the background without audio session conflict
+        if (!isMobile) {
+          startBackgroundMediaRecorder();
+        }
+      } else {
+        // Audio recording mode
+        startBackgroundMediaRecorder();
+      }
+
+      // Start timer countdown and sync UI
       timerRemaining = timerDuration;
       updateTimerDisplay(timerRemaining);
       startTimerCountdown();
       setRecordingUIState(true);
 
       const box = document.getElementById('live-transcription-text');
-      if (box) {
+      if (box && speakingInputMode === 'transcribe') {
         box.textContent = '音声を認識中...';
         box.className = 'text-slate-800 text-sm min-h-[50px] leading-relaxed italic text-slate-400';
       }
+    }
 
-      // 3. Concurrently start MediaRecorder for audio file generation
+    async function startBackgroundMediaRecorder() {
       try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioStream = stream;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStream = stream;
 
-          let mimeType = '';
-          if (typeof MediaRecorder !== 'undefined') {
-            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
-            else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
-            else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
-            else if (MediaRecorder.isTypeSupported('audio/aac')) mimeType = 'audio/aac';
-          }
-
-          mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) audioChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            const finalMime = (mediaRecorder && mediaRecorder.mimeType) || mimeType || 'audio/webm';
-            const audioBlob = new Blob(audioChunks, { type: finalMime });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            saveRecordedSession(audioUrl, audioBlob, liveTranscription || accumulatedTranscription, finalMime);
-            if (audioStream) {
-              audioStream.getTracks().forEach(track => track.stop());
-              audioStream = null;
-            }
-          };
-
-          mediaRecorder.start();
+        let mimeType = '';
+        if (typeof MediaRecorder !== 'undefined') {
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+          else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+          else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+          else if (MediaRecorder.isTypeSupported('audio/aac')) mimeType = 'audio/aac';
         }
+
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const finalMime = (mediaRecorder && mediaRecorder.mimeType) || mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunks, { type: finalMime });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          saveRecordedSession(audioUrl, audioBlob, liveTranscription || accumulatedTranscription, finalMime);
+          if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+          }
+        };
+
+        mediaRecorder.start();
       } catch (err) {
         console.warn('getUserMedia / MediaRecorder initialization failed:', err);
-        // If getUserMedia was blocked, SpeechRecognition can still continue
+        if (speakingInputMode === 'audio') {
+          showToast('マイクの使用許可が得られませんでした: ' + err.message, 'error');
+          stopRecordingSession();
+        }
       }
     }
 
@@ -2384,13 +2556,25 @@
       isExplicitlyStopping = true;
       isRecording = false;
 
+      if (speechRestartTimeout) {
+        clearTimeout(speechRestartTimeout);
+        speechRestartTimeout = null;
+      }
+
       if (speechRecognizer) {
-        try { speechRecognizer.stop(); } catch (e) {}
+        try {
+          speechRecognizer.onstart = null;
+          speechRecognizer.onspeechstart = null;
+          speechRecognizer.onresult = null;
+          speechRecognizer.onerror = null;
+          speechRecognizer.onend = null;
+          speechRecognizer.stop();
+        } catch (e) {}
       }
 
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         try { mediaRecorder.stop(); } catch (e) {}
-      } else if (!mediaRecorder && (liveTranscription || accumulatedTranscription)) {
+      } else if (liveTranscription || accumulatedTranscription) {
         saveRecordedSession('', null, liveTranscription || accumulatedTranscription, '');
       }
 
@@ -3103,6 +3287,8 @@
       document.body.classList.toggle('has-mini-player', tab === 'listening');
       document.body.classList.toggle('has-mini-speaking', tab === 'speaking');
       if (tab === 'speaking') {
+        checkMobileBrowserSpeechSupport();
+        updateSpeakingInputModeUI();
         updateSpeakingMiniSentenceCounter();
         const miniTimer = document.getElementById('mini-timer-indicator');
         if (miniTimer) {

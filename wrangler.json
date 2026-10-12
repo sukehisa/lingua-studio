@@ -15,7 +15,7 @@
     }
   ],
   "vars": {
-    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_ID": "744997186971-62b0ejiect414875d4ne0vkjc1i6jb3u.apps.googleusercontent.com",
     "DEV_MODE": "true"
   },
   "previews": {}

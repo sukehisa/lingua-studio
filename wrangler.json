@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "lingua_studio_db",
-      "database_id": "lingua-studio-db",
+      "database_id": "70546f63-8a4c-45a0-a378-e05110323301",
       "migrations_dir": "migrations"
     }
   ],

@@ -2302,7 +2302,83 @@
       const miniStatus = document.getElementById('speaking-mini-live-status');
       if (miniStatus && !isRecording && !liveTranscription) {
         miniStatus.textContent = isTranscribe ? 'スタンバイ（マイクで文字起こし開始）' : 'スタンバイ（マイクで録音開始）';
+        miniStatus.title = '';
       }
+    }
+
+    /**
+     * Extracts about 1 recent sentence (or trailing clause/words) for compact mini player display.
+     * Prevents long text from cutting off recent speech on mobile.
+     */
+    function getRecentTranscriptForMini(fullText, lang) {
+      if (!fullText) return '';
+      const text = fullText.trim();
+      if (!text) return '';
+
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. Split into sentence units using standard sentence-ending punctuation
+      const sentenceRegex = isZh 
+        ? /[^。！？\n]+[。！？\n]*/g 
+        : /[^.!?\n]+[.!?\n]*/g;
+      
+      const sentenceMatches = text.match(sentenceRegex);
+      let targetSegment = '';
+
+      if (sentenceMatches && sentenceMatches.length > 0) {
+        // Find the last non-empty sentence
+        for (let i = sentenceMatches.length - 1; i >= 0; i--) {
+          const s = sentenceMatches[i].trim();
+          if (s) {
+            targetSegment = s;
+            break;
+          }
+        }
+      }
+
+      if (!targetSegment) {
+        targetSegment = text;
+      }
+
+      // 2. If the latest sentence is still very long (or lacks sentence punctuation),
+      // refine by comma/clause breaks or trailing window so recent speech is visible on mobile mini player.
+      if (isZh) {
+        // For Chinese, 1 sentence is typically ~12-16 chars.
+        if (targetSegment.length > 15) {
+          // Check for clause breaks (， 、 ；)
+          const clauseMatches = targetSegment.match(/[^，、；,;\n]+[，、；,;\n]*/g);
+          if (clauseMatches && clauseMatches.length > 1) {
+            const lastClause = clauseMatches[clauseMatches.length - 1].trim();
+            if (lastClause.length >= 3) {
+              targetSegment = lastClause;
+            }
+          }
+        }
+        // If still longer than 15 characters, keep trailing 13 chars with ellipsis
+        if (targetSegment.length > 15) {
+          targetSegment = '…' + targetSegment.slice(-13);
+        }
+      } else {
+        // For English / Latin, 1 sentence is typically ~5-8 words (~25-35 chars).
+        if (targetSegment.length > 32) {
+          // Check for clause breaks (comma, semicolon)
+          const clauseMatches = targetSegment.match(/[^,;\n]+[,;\n]*/g);
+          if (clauseMatches && clauseMatches.length > 1) {
+            const lastClause = clauseMatches[clauseMatches.length - 1].trim();
+            const clauseWords = lastClause.split(/\s+/).filter(Boolean);
+            if (clauseWords.length >= 2) {
+              targetSegment = lastClause;
+            }
+          }
+        }
+        // If still longer than 30 characters or > 5 words, keep trailing 5 words with ellipsis
+        const words = targetSegment.split(/\s+/).filter(Boolean);
+        if (words.length > 5 || targetSegment.length > 30) {
+          targetSegment = '…' + words.slice(-5).join(' ');
+        }
+      }
+
+      return targetSegment.trim();
     }
 
     function initAndStartSpeechRecognition() {
@@ -2351,6 +2427,7 @@
           const miniStatus = document.getElementById('speaking-mini-live-status');
           if (miniStatus && isRecording && !liveTranscription) {
             miniStatus.textContent = '🟢 音声を認識中...';
+            miniStatus.title = '';
           }
         };
 
@@ -2358,6 +2435,7 @@
           const miniStatus = document.getElementById('speaking-mini-live-status');
           if (miniStatus && isRecording && !liveTranscription) {
             miniStatus.textContent = '🎙️ 音声を検知中...';
+            miniStatus.title = '';
           }
         };
 
@@ -2388,7 +2466,9 @@
 
           const miniStatus = document.getElementById('speaking-mini-live-status');
           if (miniStatus && isRecording) {
-            miniStatus.textContent = displayText ? `🎙️ ${displayText}` : '🟢 音声を認識中...';
+            const recentSnippet = getRecentTranscriptForMini(displayText, currentAppLang);
+            miniStatus.textContent = recentSnippet ? `🎙️ ${recentSnippet}` : '🟢 音声を認識中...';
+            miniStatus.title = displayText;
           }
         };
 
@@ -2639,9 +2719,23 @@
 
       if (miniStatus) {
         if (rec) {
-          miniStatus.textContent = '🔴 録音中... (タップで停止)';
+          miniStatus.textContent = speakingInputMode === 'transcribe' ? '🟢 音声を認識中...' : '🔴 録音中... (タップで停止)';
+          miniStatus.title = '';
         } else {
-          miniStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 最新結果を再生可能' : 'スタンバイ（マイクで録音開始）';
+          if (speakingInputMode === 'transcribe') {
+            const lastRecorded = recordedAudios.length > 0 ? recordedAudios[0] : null;
+            if (lastRecorded && lastRecorded.text && lastRecorded.text !== '（文字起こし結果なし）') {
+              const snippet = getRecentTranscriptForMini(lastRecorded.text, currentAppLang);
+              miniStatus.textContent = `完了: ${snippet}`;
+              miniStatus.title = lastRecorded.text;
+            } else {
+              miniStatus.textContent = 'スタンバイ（マイクで文字起こし開始）';
+              miniStatus.title = '';
+            }
+          } else {
+            miniStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 最新結果を再生可能' : 'スタンバイ（マイクで録音開始）';
+            miniStatus.title = '';
+          }
         }
       }
 

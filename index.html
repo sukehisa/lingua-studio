@@ -150,20 +150,36 @@
     .no-scrollbar {
       scrollbar-width: none;
     }
-    /* Mobile bottom offset: bottom nav (< md) + mini player on listening tab (< lg) */
-    #mobile-mini-player {
+    /* Mobile bottom offset: bottom nav (< md) + mini player on listening/speaking tab (< lg) */
+    #mobile-mini-player,
+    #mobile-mini-speaking-panel {
       bottom: 0;
       padding-bottom: env(safe-area-inset-bottom);
     }
     body:not(.has-mini-player) #mobile-mini-player {
       display: none;
     }
+    body:not(.has-mini-speaking) #mobile-mini-speaking-panel {
+      display: none;
+    }
     @media (max-width: 1023px) {
       body.has-mini-player {
-        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking {
+        padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe {
+        padding-bottom: calc(10.5rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player #toast-container {
-        bottom: calc(4.75rem + env(safe-area-inset-bottom));
+        bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking #toast-container {
+        bottom: calc(7rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe #toast-container {
+        bottom: calc(11.5rem + env(safe-area-inset-bottom));
       }
     }
     @media (max-width: 767px) {
@@ -171,9 +187,16 @@
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player {
-        padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(8.75rem + env(safe-area-inset-bottom));
       }
-      #mobile-mini-player {
+      body.has-mini-speaking {
+        padding-bottom: calc(9.5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe {
+        padding-bottom: calc(14rem + env(safe-area-inset-bottom));
+      }
+      #mobile-mini-player,
+      #mobile-mini-speaking-panel {
         bottom: calc(4rem + env(safe-area-inset-bottom));
         padding-bottom: 0;
       }
@@ -181,7 +204,13 @@
         bottom: calc(5rem + env(safe-area-inset-bottom));
       }
       body.has-mini-player #toast-container {
-        bottom: calc(9.5rem + env(safe-area-inset-bottom));
+        bottom: calc(10rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking #toast-container {
+        bottom: calc(10.5rem + env(safe-area-inset-bottom));
+      }
+      body.has-mini-speaking.mini-speaking-transcribe #toast-container {
+        bottom: calc(15rem + env(safe-area-inset-bottom));
       }
     }
   </style>
@@ -343,6 +372,90 @@
           </button>
           <!-- Invisible balancer so ▷ is mathematically centered -->
           <div class="w-10 h-10 invisible pointer-events-none shrink-0" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini speaking control panel (speaking tab, < lg) -->
+  <div id="mobile-mini-speaking-panel" class="lg:hidden fixed inset-x-0 z-30 bg-slate-900/95 backdrop-blur-md text-white border-t border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.25)] transition-all duration-200">
+    <div class="h-1 bg-slate-800">
+      <div id="mini-speaking-progress-fill" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 w-0 transition-all duration-100"></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 pt-1.5 pb-2 space-y-1.5">
+      <!-- Top info bar: Sentence Counter, Sample Voice Button, Mode Toggle -->
+      <div class="flex items-center justify-between gap-1.5 text-[11px] px-0.5">
+        <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Sentence Counter -->
+          <span id="speaking-mini-sentence-counter" class="font-mono text-slate-300 font-bold px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/80 shrink-0">0 / 0 句</span>
+          <!-- Sample Voice Button -->
+          <button onclick="playSpeakingTargetVoice()" aria-label="お手本音声を聞く" class="font-mono text-[11px] text-amber-300 hover:text-amber-200 active:scale-95 bg-slate-800/90 active:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all shrink-0">
+            <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"></path></svg>
+            <span class="text-[10px]">お手本</span>
+          </button>
+        </div>
+
+        <!-- Mode Toggle Button (Tap to switch between Transcribe and Audio Record) -->
+        <button id="mini-speaking-mode-toggle-btn" onclick="toggleSpeakingInputMode()" title="入力モードを切替 (文字起こし / 録音)" class="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/80 text-[10px] shrink-0 active:scale-95 transition-all">
+          <span class="text-rose-400 font-bold">🎙️ 文字起こし</span>
+        </button>
+      </div>
+
+      <!-- Real-time Transcription Expanded Box (shown in transcribe mode) -->
+      <div id="mini-speaking-transcribe-box-container" class="relative bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 shadow-inner">
+        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
+          <span class="flex items-center gap-1.5 font-semibold text-rose-400">
+            <span id="mini-transcribe-pulse" class="w-2 h-2 rounded-full bg-rose-500 animate-ping hidden"></span>
+            <span id="mini-transcribe-badge">リアルタイム文字起こし</span>
+          </span>
+          <span id="mini-transcribe-char-count" class="font-mono text-slate-500 text-[10px]"></span>
+        </div>
+        <div id="speaking-mini-live-status" class="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words transition-colors">
+          「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...
+        </div>
+      </div>
+
+      <!-- Audio Record Mode Status (shown in audio mode) -->
+      <div id="mini-speaking-audio-box-container" class="hidden text-center py-1 text-xs text-slate-300 font-medium">
+        <span id="speaking-mini-audio-status">スタンバイ（マイクで自分の声を録音）</span>
+      </div>
+
+      <!-- Main Controls Row: [< 前の文] [制限タイマー] | [マイク録音 (中央)] | [最新録音再生] [次の文 >] -->
+      <div class="flex items-center justify-between px-1 sm:px-6 pt-0.5">
+        <!-- Left group: [< 前の文] & [制限タイマー設定] -->
+        <div class="flex-1 flex items-center justify-end gap-2 sm:gap-3">
+          <!-- Previous sentence button -->
+          <button onclick="jumpSpeakingSentence(-1)" aria-label="前の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <!-- Timer limit cycle button -->
+          <button id="mini-timer-btn" onclick="cycleTimerLimit()" aria-label="制限タイマー設定 (タップで切替)" class="h-10 px-2.5 sm:px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:bg-slate-700 active:scale-95 border border-slate-700/80 flex items-center gap-1.5 transition-all text-xs shrink-0 cursor-pointer">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="text-slate-400 text-[10px]">制限:</span>
+            <span id="mini-timer-indicator" class="font-bold font-mono text-rose-400 text-xs">60s</span>
+          </button>
+        </div>
+
+        <!-- Center: 🎙️ マイク録音開始 / 停止 -->
+        <div class="shrink-0 px-3 sm:px-5">
+          <button id="mini-toggle-record-btn" onclick="toggleRecording()" aria-label="マイク録音開始/停止" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 transition-all">
+            <svg id="mini-mic-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            <div id="mini-stop-icon" class="w-5 h-5 bg-white rounded-xs hidden"></div>
+          </button>
+        </div>
+
+        <!-- Right group: [最新録音結果再生] & [次の文へ >] -->
+        <div class="flex-1 flex items-center justify-start gap-2 sm:gap-3">
+          <!-- Play latest recording button -->
+          <button id="mini-play-latest-btn" onclick="togglePlayLatestRecording()" disabled aria-label="最新の録音結果を再生" class="h-10 px-2.5 sm:px-3 rounded-xl bg-slate-800/80 border border-slate-700/60 opacity-40 cursor-not-allowed flex items-center gap-1.5 transition-all text-xs shrink-0 text-emerald-400">
+            <svg id="mini-latest-play-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="mini-latest-pause-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <span id="mini-latest-time-badge" class="font-mono text-[10px] font-semibold text-emerald-300">最新再生</span>
+          </button>
+          <!-- Next sentence button -->
+          <button onclick="jumpSpeakingSentence(1)" aria-label="次の文へ" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:bg-slate-700 bg-slate-800/80 border border-slate-700/60 shrink-0 transition-transform active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -623,6 +736,27 @@
             <!-- Background pulse circle while recording -->
             <div id="rec-pulse-effect" class="absolute w-64 h-64 rounded-full bg-rose-500/10 recording-pulse hidden pointer-events-none"></div>
 
+            <!-- Mode Switcher: リアルタイム文字起こし vs 音声録音 -->
+            <div class="w-full flex items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-100">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">入力モード</span>
+              <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                <button id="smode-btn-transcribe" onclick="setSpeakingInputMode('transcribe')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all">
+                  <span>🎙️ リアルタイム文字起こし</span>
+                </button>
+                <button id="smode-btn-audio" onclick="setSpeakingInputMode('audio')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all">
+                  <span>📼 音声録音・再生</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- iOS Chrome / In-app browser warning banner -->
+            <div id="mobile-browser-speech-warning" class="hidden w-full text-left p-3 mb-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+              <div class="flex items-center gap-1.5 font-bold text-amber-900">
+                <span>⚠️ iOSブラウザの制約について</span>
+              </div>
+              <p>iOSのChrome、アプリ内ブラウザ（LINE/Twitter等）、およびホーム画面追加版（PWA）では、Appleの制約によりリアルタイム音声認識が制限されます。文字起こしをご利用の際は<strong>標準のSafariブラウザ（通常タブ）</strong>で開くか、上の<strong>「📼 音声録音・再生」</strong>モードをご利用ください。</p>
+            </div>
+
             <!-- Timer Settings (Seconds Selector) -->
             <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6 pb-4 border-b border-slate-100">
               <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">制限タイマー設定</span>
@@ -871,11 +1005,19 @@
     let timerRemaining = 60;
     let timerInterval = null;
     let isRecording = false;
+    let isExplicitlyStopping = false;
     let mediaRecorder = null;
+    let audioStream = null;
     let audioChunks = [];
     let recordedAudios = [];
     let speechRecognizer = null;
+    let accumulatedTranscription = '';
+    let currentSessionFinal = '';
+    let currentSessionInterim = '';
     let liveTranscription = '';
+    let latestAudioPlayer = null;
+    let speakingInputMode = 'transcribe'; // 'transcribe' (リアルタイム文字起こし) or 'audio' (マイク録音・再生)
+    let speechRestartTimeout = null;
     let editingArticleId = null;
     let currentTab = 'listening';
 
@@ -889,6 +1031,8 @@
       setupSpeechRecognition();
       setupKeyboardShortcuts();
       updateTimerDisplay(timerDuration);
+      checkMobileBrowserSpeechSupport();
+      updateSpeakingInputModeUI();
       try {
         const savedFs = localStorage.getItem('lingua_font_size_level');
         if (savedFs !== null) {
@@ -1641,6 +1785,7 @@
       document.getElementById('speaking-target-text').value = targetText;
       renderSpeakingSentencesList();
       updateSpeakingFocusedDisplay();
+      updateSpeakingMiniSentenceCounter();
     }
 
     function renderSpeakingSentencesList() {
@@ -1709,6 +1854,35 @@
       activeSpeakingSentenceIndex = index;
       renderSpeakingSentencesList();
       updateSpeakingFocusedDisplay();
+      updateSpeakingMiniSentenceCounter();
+      scrollSpeakingSentenceIntoView(index);
+    }
+
+    function scrollSpeakingSentenceIntoView(index) {
+      const container = document.getElementById('speaking-sentences-list');
+      if (!container) return;
+      const items = container.children;
+      if (items && items[index]) {
+        items[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function jumpSpeakingSentence(delta) {
+      if (speakingSentences.length === 0) return;
+      const nextIdx = Math.max(0, Math.min(speakingSentences.length - 1, activeSpeakingSentenceIndex + delta));
+      if (nextIdx !== activeSpeakingSentenceIndex) {
+        selectSpeakingSentence(nextIdx);
+        playSpeakingTargetVoice();
+      }
+    }
+
+    function updateSpeakingMiniSentenceCounter() {
+      const miniCounter = document.getElementById('speaking-mini-sentence-counter');
+      if (miniCounter) {
+        const total = speakingSentences.length;
+        const current = total > 0 ? activeSpeakingSentenceIndex + 1 : 0;
+        miniCounter.textContent = `${current} / ${total} 句`;
+      }
     }
 
     function updateSpeakingFocusedDisplay() {
@@ -1726,6 +1900,10 @@
 
     function playSpeakingTargetVoice() {
       if (speakingSentences.length === 0 || !speakingSentences[activeSpeakingSentenceIndex]) return;
+      if (latestAudioPlayer && !latestAudioPlayer.paused) {
+        latestAudioPlayer.pause();
+        updateMiniLatestPlayIcon(false);
+      }
       if (currentUtterance) {
         currentUtterance.onstart = null;
         currentUtterance.onend = null;
@@ -2077,122 +2255,774 @@
       selectAndPlaySentence(Math.min(targetIndex, sentences.length - 1));
     }
 
-    function setupSpeechRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return;
+    function checkMobileBrowserSpeechSupport() {
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isIOSChrome = isIOS && /CriOS/i.test(navigator.userAgent);
+      const isIOSFirefox = isIOS && /FxiOS/i.test(navigator.userAgent);
+      const isWebview = isIOS && (!/Safari/i.test(navigator.userAgent) || /Line|FBAN|FBAV|Twitter|Instagram/i.test(navigator.userAgent));
+      const isStandalonePWA = window.navigator.standalone === true;
 
-      if (speechRecognizer) {
-        try { speechRecognizer.abort(); } catch (e) {}
-      }
-
-      speechRecognizer = new SpeechRecognition();
-      speechRecognizer.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
-      speechRecognizer.continuous = true;
-      speechRecognizer.interimResults = true;
-
-      speechRecognizer.onstart = () => {
-        document.getElementById('transcription-indicator').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-ping';
-      };
-
-      speechRecognizer.onresult = (event) => {
-        let interim = '';
-        let final = '';
-
-        for (let i = 0; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
+      const banner = document.getElementById('mobile-browser-speech-warning');
+      if (banner) {
+        if (isIOSChrome || isIOSFirefox || isWebview || isStandalonePWA) {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
         }
-        liveTranscription = final + interim;
-        const box = document.getElementById('live-transcription-text');
-        box.textContent = liveTranscription || '発話内容がここにリアルタイムで表示されます...';
-        box.classList.remove('italic', 'text-slate-400');
-        box.classList.add('text-slate-900');
-      };
-
-      speechRecognizer.onerror = (event) => {
-        console.warn('SpeechRecognition error:', event.error);
-      };
-
-      speechRecognizer.onend = () => {
-        document.getElementById('transcription-indicator').className = 'w-2 h-2 rounded-full bg-slate-300';
-      };
+      }
     }
 
-    async function toggleRecording() {
+    function setupSpeechRecognition() {
+      checkMobileBrowserSpeechSupport();
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const box = document.getElementById('live-transcription-text');
+      if (!SpeechRecognition) {
+        if (box) {
+          box.textContent = '※ お使いのブラウザは音声認識機能に対応していません (Safari または Chrome をご利用ください)';
+          box.className = 'text-amber-800 text-xs p-2.5 bg-amber-50 rounded-xl border border-amber-200';
+        }
+        const miniStatus = document.getElementById('speaking-mini-live-status');
+        if (miniStatus) {
+          miniStatus.textContent = '音声認識非対応ブラウザ (Safari/Chrome推奨)';
+        }
+      }
+    }
+
+    function setSpeakingInputMode(mode) {
+      if (isRecording) {
+        showToast('録音中はモードを変更できません', 'error');
+        return;
+      }
+      speakingInputMode = mode;
+      updateSpeakingInputModeUI();
+      showToast(mode === 'transcribe' ? '「リアルタイム文字起こし」モードに切り替えました' : '「音声録音・再生」モードに切り替えました');
+    }
+
+    function toggleSpeakingInputMode() {
+      setSpeakingInputMode(speakingInputMode === 'transcribe' ? 'audio' : 'transcribe');
+    }
+
+    function updateSpeakingInputModeUI() {
+      const btnTranscribe = document.getElementById('smode-btn-transcribe');
+      const btnAudio = document.getElementById('smode-btn-audio');
+      const miniModeBtn = document.getElementById('mini-speaking-mode-toggle-btn');
+      const isTranscribe = speakingInputMode === 'transcribe';
+
+      if (btnTranscribe && btnAudio) {
+        if (isTranscribe) {
+          btnTranscribe.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all';
+          btnAudio.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all';
+        } else {
+          btnTranscribe.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 transition-all';
+          btnAudio.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg bg-white text-rose-600 font-bold shadow-xs flex items-center gap-1 transition-all';
+        }
+      }
+
+      if (miniModeBtn) {
+        miniModeBtn.innerHTML = isTranscribe 
+          ? '<span class="text-rose-400 font-bold">🎙️ 文字起こし</span>'
+          : '<span class="text-blue-400 font-bold">📼 録音</span>';
+      }
+
+      const transcribeBox = document.getElementById('mini-speaking-transcribe-box-container');
+      const audioBox = document.getElementById('mini-speaking-audio-box-container');
+      if (transcribeBox && audioBox) {
+        if (isTranscribe) {
+          transcribeBox.classList.remove('hidden');
+          audioBox.classList.add('hidden');
+        } else {
+          transcribeBox.classList.add('hidden');
+          audioBox.classList.remove('hidden');
+        }
+      }
+
+      if (currentTab === 'speaking') {
+        document.body.classList.toggle('mini-speaking-transcribe', isTranscribe);
+      }
+
+      const statusLabel = document.getElementById('record-status-label');
+      if (statusLabel && !isRecording) {
+        statusLabel.textContent = isTranscribe ? '「録音開始」を押して話すとリアルタイムで文字起こしされます' : '「録音開始」を押して話すと自分の声が録音されます';
+      }
+
+      const box = document.getElementById('live-transcription-text');
+      if (box && !isRecording && !liveTranscription) {
+        box.textContent = isTranscribe ? '発話内容がここにリアルタイムで表示されます...' : '音声録音モード：録音終了後に自分の声を聞き返せます';
+        box.className = 'text-slate-500 text-xs min-h-[50px] leading-relaxed italic';
+      }
+
+      const miniStatus = document.getElementById('speaking-mini-live-status');
+      if (miniStatus && !isRecording && !liveTranscription) {
+        miniStatus.textContent = '「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...';
+        miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+        miniStatus.title = '';
+      }
+
+      const audioStatus = document.getElementById('speaking-mini-audio-status');
+      if (audioStatus && !isRecording) {
+        audioStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 「最新再生」ボタンで聞き返せます' : 'スタンバイ（マイクで自分の声を録音）';
+      }
+    }
+
+    /**
+     * Cleans whitespace in a transcript string.
+     */
+    function cleanTranscript(s) {
+      return (s || '').trim().replace(/\s+/g, ' ');
+    }
+
+    /**
+     * Joins two transcript parts cleanly with language-appropriate spacing
+     * and intelligent overlap de-duplication to prevent repeated phrases across
+     * Web Speech API result events, interim streams, and session restarts.
+     */
+    function joinTranscripts(part1, part2, lang) {
+      const p1 = cleanTranscript(part1);
+      const p2 = cleanTranscript(part2);
+      if (!p1) return p2;
+      if (!p2) return p1;
+      if (p1.toLowerCase() === p2.toLowerCase()) return p1;
+
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. Superset: p2 starts with p1 (e.g. p1="Hello", p2="Hello world" or p1="你好", p2="你好世界")
+      if (p2.toLowerCase().startsWith(p1.toLowerCase())) {
+        return p2;
+      }
+
+      // 2. Subsumed: p1 already ends with p2 (e.g. p1="Hello world", p2="world" or p1="你好世界", p2="世界")
+      if (p1.toLowerCase().endsWith(p2.toLowerCase())) {
+        return p1;
+      }
+
+      // 3. Partial overlap: suffix of p1 matches prefix of p2
+      const maxCheckLen = Math.min(p1.length, p2.length);
+      let bestOverlap = 0;
+
+      for (let len = 1; len <= maxCheckLen; len++) {
+        const s1 = p1.slice(-len);
+        const s2 = p2.slice(0, len);
+        if (s1.toLowerCase() === s2.toLowerCase()) {
+          if (!isZh) {
+            // Must be whole word boundary in English/Latin
+            const charBefore = p1.length - len > 0 ? p1[p1.length - len - 1] : ' ';
+            const charAfter = len < p2.length ? p2[len] : ' ';
+            if ((charBefore === ' ' || p1.length === len) && (charAfter === ' ' || p2.length === len)) {
+              bestOverlap = len;
+            }
+          } else {
+            // For Chinese partial overlap, require at least 2 chars unless one text is 1 char
+            if (len >= 2 || p1.length === 1 || p2.length === 1) {
+              bestOverlap = len;
+            }
+          }
+        }
+      }
+
+      if (bestOverlap > 0) {
+        const remaining = p2.slice(bestOverlap).trim();
+        if (!remaining) return p1;
+        if (isZh) {
+          const p1Ascii = /[a-zA-Z0-9]$/.test(p1);
+          const p2Ascii = /^[a-zA-Z0-9]/.test(remaining);
+          if (p1Ascii || p2Ascii) return `${p1} ${remaining}`;
+          return `${p1}${remaining}`;
+        } else {
+          return `${p1} ${remaining}`;
+        }
+      }
+
+      // 4. No overlap: concatenate with language-appropriate spacing
+      if (isZh) {
+        const p1Ascii = /[a-zA-Z0-9]$/.test(p1);
+        const p2Ascii = /^[a-zA-Z0-9]/.test(p2);
+        if (p1Ascii || p2Ascii) return `${p1} ${p2}`;
+        return `${p1}${p2}`;
+      } else {
+        if (/^[.,!?;:]/.test(p2)) return `${p1}${p2}`;
+        return `${p1} ${p2}`;
+      }
+    }
+
+    /**
+     * Extracts only the unfinalized delta of interim text relative to finalized text,
+     * ensuring that words already present in finalPart are not duplicated in the interim highlight.
+     */
+    function extractDeltaInterim(finalText, interimText, lang) {
+      const f = cleanTranscript(finalText);
+      const i = cleanTranscript(interimText);
+      if (!i) return '';
+      if (!f) return i;
+      if (f.toLowerCase() === i.toLowerCase()) return '';
+
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. interim starts with final
+      if (i.toLowerCase().startsWith(f.toLowerCase())) {
+        return i.slice(f.length).trim();
+      }
+
+      // 2. final already ends with interim
+      if (f.toLowerCase().endsWith(i.toLowerCase())) {
+        return '';
+      }
+
+      // 3. suffix of final matches prefix of interim
+      const maxCheckLen = Math.min(f.length, i.length);
+      let bestOverlap = 0;
+      for (let len = 1; len <= maxCheckLen; len++) {
+        const sf = f.slice(-len);
+        const si = i.slice(0, len);
+        if (sf.toLowerCase() === si.toLowerCase()) {
+          if (!isZh) {
+            const charBefore = f.length - len > 0 ? f[f.length - len - 1] : ' ';
+            const charAfter = len < i.length ? i[len] : ' ';
+            if ((charBefore === ' ' || f.length === len) && (charAfter === ' ' || i.length === len)) {
+              bestOverlap = len;
+            }
+          } else {
+            if (len >= 2 || f.length === 1 || i.length === 1) {
+              bestOverlap = len;
+            }
+          }
+        }
+      }
+
+      if (bestOverlap > 0) {
+        return i.slice(bestOverlap).trim();
+      }
+
+      return i;
+    }
+
+    /**
+     * Updates the expanded mini player real-time transcription display.
+     * Highlights in-flight speech and automatically keeps latest words in view.
+     */
+    function updateMiniTranscriptionDisplay(displayText, interim, finalPart) {
+      const miniStatus = document.getElementById('speaking-mini-live-status');
+      const badge = document.getElementById('mini-transcribe-badge');
+      const pulse = document.getElementById('mini-transcribe-pulse');
+      const charCount = document.getElementById('mini-transcribe-char-count');
+      if (!miniStatus) return;
+
+      if (!displayText) {
+        miniStatus.textContent = 'マイクに向かって話してください...';
+        miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+        if (badge) badge.textContent = '音声認識中';
+        if (pulse) pulse.classList.remove('hidden');
+        if (charCount) charCount.textContent = '';
+        return;
+      }
+
+      if (pulse) pulse.classList.remove('hidden');
+      if (badge) badge.textContent = isRecording ? 'リアルタイム認識中' : '文字起こし完了';
+
+      if (charCount) {
+        const countText = currentAppLang === 'zh' ? `${displayText.length} 字` : `${displayText.split(/\s+/).filter(Boolean).length} 語`;
+        charCount.textContent = countText;
+      }
+
+      const deltaInterim = extractDeltaInterim(finalPart, interim, currentAppLang);
+
+      if (deltaInterim) {
+        let formattedFinal = '';
+        if (finalPart) {
+          if (currentAppLang === 'zh') {
+            const endsWithAscii = /[a-zA-Z0-9]$/.test(finalPart);
+            const startsWithAscii = /^[a-zA-Z0-9]/.test(deltaInterim);
+            formattedFinal = (endsWithAscii || startsWithAscii) ? finalPart + ' ' : finalPart;
+          } else {
+            formattedFinal = finalPart + ' ';
+          }
+        }
+        miniStatus.innerHTML = `<span class="text-slate-300 font-medium">${escapeHtml(formattedFinal)}</span><span class="text-rose-400 font-bold underline decoration-rose-500/50">${escapeHtml(deltaInterim)}</span>`;
+      } else {
+        miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(displayText)}</span>`;
+      }
+
+      miniStatus.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+      miniStatus.title = displayText;
+
+      // Automatically keep the latest spoken words scrolled into view
+      miniStatus.scrollTop = miniStatus.scrollHeight;
+    }
+
+    /**
+     * Extracts about 1 recent sentence (or trailing clause/words) for compact mini player display.
+     * Prevents long text from cutting off recent speech on mobile.
+     */
+    function getRecentTranscriptForMini(fullText, lang) {
+      if (!fullText) return '';
+      const text = fullText.trim();
+      if (!text) return '';
+
+      const isZh = (lang || currentAppLang) === 'zh';
+
+      // 1. Split into sentence units using standard sentence-ending punctuation
+      const sentenceRegex = isZh 
+        ? /[^。！？\n]+[。！？\n]*/g 
+        : /[^.!?\n]+[.!?\n]*/g;
+      
+      const sentenceMatches = text.match(sentenceRegex);
+      let targetSegment = '';
+
+      if (sentenceMatches && sentenceMatches.length > 0) {
+        // Find the last non-empty sentence
+        for (let i = sentenceMatches.length - 1; i >= 0; i--) {
+          const s = sentenceMatches[i].trim();
+          if (s) {
+            targetSegment = s;
+            break;
+          }
+        }
+      }
+
+      if (!targetSegment) {
+        targetSegment = text;
+      }
+
+      // 2. If the latest sentence is still very long (or lacks sentence punctuation),
+      // refine by comma/clause breaks or trailing window so recent speech is visible on mobile mini player.
+      if (isZh) {
+        // For Chinese, 1 sentence is typically ~12-16 chars.
+        if (targetSegment.length > 15) {
+          // Check for clause breaks (， 、 ；)
+          const clauseMatches = targetSegment.match(/[^，、；,;\n]+[，、；,;\n]*/g);
+          if (clauseMatches && clauseMatches.length > 1) {
+            const lastClause = clauseMatches[clauseMatches.length - 1].trim();
+            if (lastClause.length >= 3) {
+              targetSegment = lastClause;
+            }
+          }
+        }
+        // If still longer than 15 characters, keep trailing 13 chars with ellipsis
+        if (targetSegment.length > 15) {
+          targetSegment = '…' + targetSegment.slice(-13);
+        }
+      } else {
+        // For English / Latin, 1 sentence is typically ~5-8 words (~25-35 chars).
+        if (targetSegment.length > 32) {
+          // Check for clause breaks (comma, semicolon)
+          const clauseMatches = targetSegment.match(/[^,;\n]+[,;\n]*/g);
+          if (clauseMatches && clauseMatches.length > 1) {
+            const lastClause = clauseMatches[clauseMatches.length - 1].trim();
+            const clauseWords = lastClause.split(/\s+/).filter(Boolean);
+            if (clauseWords.length >= 2) {
+              targetSegment = lastClause;
+            }
+          }
+        }
+        // If still longer than 30 characters or > 5 words, keep trailing 5 words with ellipsis
+        const words = targetSegment.split(/\s+/).filter(Boolean);
+        if (words.length > 5 || targetSegment.length > 30) {
+          targetSegment = '…' + words.slice(-5).join(' ');
+        }
+      }
+
+      return targetSegment.trim();
+    }
+
+    function initAndStartSpeechRecognition() {
+      if (speechRestartTimeout) {
+        clearTimeout(speechRestartTimeout);
+        speechRestartTimeout = null;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn('SpeechRecognition not supported in this browser');
+        const box = document.getElementById('live-transcription-text');
+        if (box) {
+          box.textContent = '※ お使いのブラウザは音声認識機能に対応していません (Safari または Chrome をご利用ください)';
+          box.className = 'text-amber-800 text-xs p-2.5 bg-amber-50 rounded-xl border border-amber-200';
+        }
+        return false;
+      }
+
+      if (speechRecognizer) {
+        try {
+          speechRecognizer.onstart = null;
+          speechRecognizer.onspeechstart = null;
+          speechRecognizer.onresult = null;
+          speechRecognizer.onerror = null;
+          speechRecognizer.onend = null;
+          speechRecognizer.abort();
+        } catch (e) {}
+        speechRecognizer = null;
+      }
+
+      try {
+        speechRecognizer = new SpeechRecognition();
+        speechRecognizer.lang = currentAppLang === 'zh' ? 'zh-CN' : 'en-US';
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+        speechRecognizer.maxAlternatives = 1;
+
+        speechRecognizer.onstart = () => {
+          updateTranscriptionIndicator(true);
+          const box = document.getElementById('live-transcription-text');
+          if (box && !liveTranscription) {
+            box.textContent = '🟢 音声を認識中... マイクに向かって話してください';
+            box.className = 'text-emerald-700 text-sm min-h-[50px] leading-relaxed font-medium';
+          }
+          if (isRecording && !liveTranscription) {
+            updateMiniTranscriptionDisplay('', '');
+          }
+        };
+
+        speechRecognizer.onspeechstart = () => {
+          const miniStatus = document.getElementById('speaking-mini-live-status');
+          const badge = document.getElementById('mini-transcribe-badge');
+          if (miniStatus && isRecording && !liveTranscription) {
+            miniStatus.textContent = '🎙️ 音声を検知中...';
+            miniStatus.title = '';
+          }
+          if (badge) badge.textContent = '音声検知中';
+        };
+
+        speechRecognizer.onresult = (event) => {
+          let sessionInterim = '';
+          let sessionFinal = '';
+
+          for (let i = 0; i < event.results.length; ++i) {
+            const res = event.results[i];
+            if (!res || !res[0]) continue;
+            const text = res[0].transcript;
+            if (res.isFinal) {
+              sessionFinal = joinTranscripts(sessionFinal, text, currentAppLang);
+            } else {
+              sessionInterim = joinTranscripts(sessionInterim, text, currentAppLang);
+            }
+          }
+
+          currentSessionFinal = sessionFinal.trim();
+          currentSessionInterim = sessionInterim.trim();
+
+          const combinedFinal = joinTranscripts(accumulatedTranscription, currentSessionFinal, currentAppLang);
+          const fullText = joinTranscripts(combinedFinal, currentSessionInterim, currentAppLang);
+          liveTranscription = fullText;
+
+          const box = document.getElementById('live-transcription-text');
+          if (box) {
+            box.textContent = fullText || '発話内容がここにリアルタイムで表示されます...';
+            box.className = 'text-slate-900 text-sm min-h-[50px] leading-relaxed font-medium';
+          }
+
+          if (isRecording) {
+            updateMiniTranscriptionDisplay(fullText, currentSessionInterim, combinedFinal);
+          }
+        };
+
+        speechRecognizer.onerror = (event) => {
+          console.warn('SpeechRecognition error:', event.error);
+          const errorDescriptions = {
+            'not-allowed': 'マイクまたは音声認識の利用が拒否されました。設定でマイク・音声認識を許可してください。',
+            'service-not-allowed': 'このブラウザでは音声認識がサポートされていません。iOS標準のSafariでお試しいただくか、「音声録音」モードをご利用ください。',
+            'audio-capture': 'マイクの取得に失敗しました。他のアプリやタブがマイクを使用していないか確認してください。',
+            'language-not-supported': `言語（${speechRecognizer.lang}）がお使いの端末でサポートされていません。端末設定 > キーボードで言語を追加してください。`,
+            'network': '音声認識のネットワーク通信エラーです。電波状況をご確認ください。',
+            'no-speech': '音声が検出されませんでした。マイクに近づいて発話してください。'
+          };
+
+          const msg = errorDescriptions[event.error] || `音声認識エラー: ${event.error}`;
+          if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            showToast(msg, 'error');
+            const box = document.getElementById('live-transcription-text');
+            if (box && !liveTranscription) {
+              box.textContent = `⚠️ ${msg}`;
+              box.className = 'text-rose-700 text-xs p-2.5 bg-rose-50 rounded-xl border border-rose-200';
+            }
+          }
+        };
+
+        speechRecognizer.onend = () => {
+          const sessionPending = joinTranscripts(currentSessionFinal, currentSessionInterim, currentAppLang);
+          if (sessionPending) {
+            accumulatedTranscription = joinTranscripts(accumulatedTranscription, sessionPending, currentAppLang);
+            currentSessionFinal = '';
+            currentSessionInterim = '';
+          }
+
+          // If still recording and not explicitly stopped by the user, restart after small delay
+          // (prevents rapid-fire restart deadlock on WebKit / iOS Safari)
+          if (isRecording && !isExplicitlyStopping) {
+            speechRestartTimeout = setTimeout(() => {
+              if (isRecording && !isExplicitlyStopping) {
+                try {
+                  initAndStartSpeechRecognition();
+                } catch (err) {
+                  console.warn('SpeechRecognition restart error:', err);
+                  updateTranscriptionIndicator(false);
+                }
+              }
+            }, 300);
+          } else {
+            updateTranscriptionIndicator(false);
+          }
+        };
+
+        speechRecognizer.start();
+        return true;
+      } catch (err) {
+        console.warn('SpeechRecognition.start exception:', err);
+        const box = document.getElementById('live-transcription-text');
+        if (box) {
+          box.textContent = `⚠️ 音声認識の起動に失敗しました: ${err.message || err}`;
+          box.className = 'text-rose-700 text-xs p-2.5 bg-rose-50 rounded-xl border border-rose-200';
+        }
+        return false;
+      }
+    }
+
+    function toggleRecording() {
       if (isRecording) {
         stopRecordingSession();
       } else {
-        await startRecordingSession();
+        startRecordingSession();
       }
     }
 
-    async function startRecordingSession() {
+    function startRecordingSession() {
+      // Stop model synthesis playback and latest recording playback
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      if (latestAudioPlayer) {
+        latestAudioPlayer.pause();
+        latestAudioPlayer.currentTime = 0;
+        updateMiniLatestPlayIcon(false);
+      }
+      document.querySelectorAll('audio').forEach(a => {
+        try { a.pause(); a.currentTime = 0; } catch (e) {}
+      });
+
+      isExplicitlyStopping = false;
+      isRecording = true;
+      audioChunks = [];
+      mediaRecorder = null;
+      if (audioStream) {
+        try { audioStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        audioStream = null;
+      }
+      accumulatedTranscription = '';
+      currentSessionFinal = '';
+      currentSessionInterim = '';
+      liveTranscription = '';
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      // Start input according to mode
+      if (speakingInputMode === 'transcribe') {
+        // 1. Start SpeechRecognition SYNCHRONOUSLY within direct user gesture tick
+        initAndStartSpeechRecognition();
+
+        // On desktop, we can also record audio concurrently in the background without audio session conflict
+        if (!isMobile) {
+          startBackgroundMediaRecorder();
+        }
+      } else {
+        // Audio recording mode
+        startBackgroundMediaRecorder();
+      }
+
+      // Start timer countdown and sync UI
+      timerRemaining = timerDuration;
+      updateTimerDisplay(timerRemaining);
+      startTimerCountdown();
+      setRecordingUIState(true);
+
+      const box = document.getElementById('live-transcription-text');
+      if (box && speakingInputMode === 'transcribe') {
+        box.textContent = '音声を認識中...';
+        box.className = 'text-slate-800 text-sm min-h-[50px] leading-relaxed italic text-slate-400';
+      }
+    }
+
+    async function startBackgroundMediaRecorder() {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        audioStream = stream;
+
+        let mimeType = '';
+        if (typeof MediaRecorder !== 'undefined') {
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+          else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+          else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+          else if (MediaRecorder.isTypeSupported('audio/aac')) mimeType = 'audio/aac';
+        }
+
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
         audioChunks = [];
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunks.push(e.data);
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const finalMime = (mediaRecorder && mediaRecorder.mimeType) || mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunks, { type: finalMime });
           const audioUrl = URL.createObjectURL(audioBlob);
-          saveRecordedSession(audioUrl, audioBlob, liveTranscription);
-          stream.getTracks().forEach(track => track.stop());
+          saveRecordedSession(audioUrl, audioBlob, liveTranscription || accumulatedTranscription, finalMime);
+          if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+          }
         };
 
         mediaRecorder.start();
-        isRecording = true;
-
-        if (speechRecognizer) {
-          liveTranscription = '';
-          document.getElementById('live-transcription-text').textContent = '音声を認識中...';
-          try { speechRecognizer.start(); } catch (e) {}
-        }
-
-        timerRemaining = timerDuration;
-        updateTimerDisplay(timerRemaining);
-        startTimerCountdown();
-
-        document.getElementById('mic-icon').classList.add('hidden');
-        document.getElementById('stop-icon').classList.remove('hidden');
-        document.getElementById('toggle-record-btn').classList.replace('bg-rose-600', 'bg-slate-900');
-        document.getElementById('rec-pulse-effect').classList.remove('hidden');
-        document.getElementById('record-status-label').textContent = '録音中... (終了ボタンまたは時間切れで停止)';
-        document.getElementById('record-status-label').className = 'mt-3 text-xs font-semibold text-rose-600 animate-pulse';
-
       } catch (err) {
-        showToast('マイクの使用許可が得られませんでした: ' + err.message, 'error');
+        console.warn('getUserMedia / MediaRecorder initialization failed:', err);
+        if (speakingInputMode === 'audio') {
+          showToast('マイクの使用許可が得られませんでした: ' + err.message, 'error');
+          stopRecordingSession();
+        }
       }
     }
 
     function stopRecordingSession() {
       if (!isRecording) return;
+      isExplicitlyStopping = true;
       isRecording = false;
 
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
+      if (speechRestartTimeout) {
+        clearTimeout(speechRestartTimeout);
+        speechRestartTimeout = null;
       }
 
       if (speechRecognizer) {
-        try { speechRecognizer.stop(); } catch (e) {}
+        try {
+          speechRecognizer.onstart = null;
+          speechRecognizer.onspeechstart = null;
+          speechRecognizer.onresult = null;
+          speechRecognizer.onerror = null;
+          speechRecognizer.onend = null;
+          speechRecognizer.stop();
+        } catch (e) {}
+      }
+
+      const sessionPending = joinTranscripts(currentSessionFinal, currentSessionInterim, currentAppLang);
+      if (sessionPending) {
+        accumulatedTranscription = joinTranscripts(accumulatedTranscription, sessionPending, currentAppLang);
+        currentSessionFinal = '';
+        currentSessionInterim = '';
+      }
+      if (!liveTranscription && accumulatedTranscription) {
+        liveTranscription = accumulatedTranscription;
+      }
+
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        try { mediaRecorder.stop(); } catch (e) {}
+      } else if (liveTranscription || accumulatedTranscription) {
+        saveRecordedSession('', null, liveTranscription || accumulatedTranscription, '');
       }
 
       clearInterval(timerInterval);
-
-      document.getElementById('mic-icon').classList.remove('hidden');
-      document.getElementById('stop-icon').classList.add('hidden');
-      document.getElementById('toggle-record-btn').classList.replace('bg-slate-900', 'bg-rose-600');
-      document.getElementById('rec-pulse-effect').classList.add('hidden');
-      document.getElementById('record-status-label').textContent = '録音が完了しました！';
-      document.getElementById('record-status-label').className = 'mt-3 text-xs font-semibold text-emerald-600';
-
+      setRecordingUIState(false);
       showToast('録音と文字起こしを保存しました');
+    }
+
+    function setRecordingUIState(rec) {
+      // Desktop elements
+      const micIcon = document.getElementById('mic-icon');
+      const stopIcon = document.getElementById('stop-icon');
+      const toggleBtn = document.getElementById('toggle-record-btn');
+      const pulseEffect = document.getElementById('rec-pulse-effect');
+      const statusLabel = document.getElementById('record-status-label');
+
+      if (micIcon && stopIcon) {
+        micIcon.classList.toggle('hidden', rec);
+        stopIcon.classList.toggle('hidden', !rec);
+      }
+
+      if (toggleBtn) {
+        if (rec) {
+          toggleBtn.classList.replace('bg-rose-600', 'bg-slate-900');
+        } else {
+          toggleBtn.classList.replace('bg-slate-900', 'bg-rose-600');
+        }
+      }
+
+      if (pulseEffect) {
+        pulseEffect.classList.toggle('hidden', !rec);
+      }
+
+      if (statusLabel) {
+        if (rec) {
+          statusLabel.textContent = '録音中... (終了ボタンまたは時間切れで停止)';
+          statusLabel.className = 'mt-3 text-xs font-semibold text-rose-600 animate-pulse';
+        } else {
+          statusLabel.textContent = recordedAudios.length > 0 ? '録音が完了しました！' : '「録音開始」を押して話してください';
+          statusLabel.className = recordedAudios.length > 0 ? 'mt-3 text-xs font-semibold text-emerald-600' : 'mt-3 text-xs font-semibold text-slate-600';
+        }
+      }
+
+      // Mini speaking panel elements
+      const miniMicIcon = document.getElementById('mini-mic-icon');
+      const miniStopIcon = document.getElementById('mini-stop-icon');
+      const miniToggleBtn = document.getElementById('mini-toggle-record-btn');
+      const miniStatus = document.getElementById('speaking-mini-live-status');
+
+      if (miniMicIcon && miniStopIcon) {
+        miniMicIcon.classList.toggle('hidden', rec);
+        miniStopIcon.classList.toggle('hidden', !rec);
+      }
+
+      if (miniToggleBtn) {
+        if (rec) {
+          miniToggleBtn.className = 'w-12 h-12 rounded-full bg-slate-900 ring-2 ring-rose-500 animate-pulse active:scale-95 flex items-center justify-center text-white shadow-lg transition-all';
+        } else {
+          miniToggleBtn.className = 'w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-rose-900/50 transition-all';
+        }
+      }
+
+      if (miniStatus) {
+        const badge = document.getElementById('mini-transcribe-badge');
+        const pulse = document.getElementById('mini-transcribe-pulse');
+        const audioStatus = document.getElementById('speaking-mini-audio-status');
+
+        if (rec) {
+          if (speakingInputMode === 'transcribe') {
+            miniStatus.textContent = '🟢 音声を認識中... マイクに向かって話してください';
+            miniStatus.className = 'text-xs sm:text-sm text-emerald-400 font-medium min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+            miniStatus.title = '';
+            if (badge) badge.textContent = '音声認識中';
+            if (pulse) pulse.classList.remove('hidden');
+          } else {
+            if (audioStatus) audioStatus.textContent = '🔴 録音中... (タップで停止)';
+          }
+        } else {
+          if (speakingInputMode === 'transcribe') {
+            if (pulse) pulse.classList.add('hidden');
+            if (badge) badge.textContent = recordedAudios.length > 0 && liveTranscription ? '文字起こし完了' : 'リアルタイム文字起こし';
+
+            if (liveTranscription) {
+              miniStatus.innerHTML = `<span class="text-slate-100 font-medium">${escapeHtml(liveTranscription)}</span>`;
+              miniStatus.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+              miniStatus.title = liveTranscription;
+              miniStatus.scrollTop = miniStatus.scrollHeight;
+            } else {
+              miniStatus.textContent = '「録音開始」を押して話すと、ここにリアルタイムで文字起こしが表示されます...';
+              miniStatus.className = 'text-xs sm:text-sm text-slate-400 italic font-normal min-h-[38px] max-h-[58px] overflow-y-auto no-scrollbar break-words';
+              miniStatus.title = '';
+            }
+          } else {
+            if (audioStatus) {
+              audioStatus.textContent = recordedAudios.length > 0 ? '録音完了 - 「最新再生」ボタンで聞き返せます' : 'スタンバイ（マイクで自分の声を録音）';
+            }
+          }
+        }
+      }
+
+      updateMiniPlayLatestButtonState();
+    }
+
+    function updateTranscriptionIndicator(isActive) {
+      const ind = document.getElementById('transcription-indicator');
+      if (ind) {
+        ind.className = isActive ? 'w-2 h-2 rounded-full bg-emerald-500 animate-ping' : 'w-2 h-2 rounded-full bg-slate-300';
+      }
     }
 
     function startTimerCountdown() {
@@ -2223,17 +3053,47 @@
           btn.className = 'timer-chip px-2.5 py-1 text-xs rounded-lg font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200';
         }
       });
+
+      const miniTimer = document.getElementById('mini-timer-indicator');
+      if (miniTimer) {
+        miniTimer.textContent = `${seconds}s`;
+      }
+    }
+
+    function cycleTimerLimit() {
+      if (isRecording) {
+        showToast('録音中はタイマーを変更できません', 'error');
+        return;
+      }
+      const limits = [30, 60, 90, 120];
+      const idx = limits.indexOf(timerDuration);
+      const next = limits[(idx + 1) % limits.length];
+      setTimerLimit(next);
     }
 
     function updateTimerDisplay(remaining) {
-      document.getElementById('timer-countdown-text').textContent = remaining;
+      const cdText = document.getElementById('timer-countdown-text');
+      if (cdText) cdText.textContent = remaining;
+
       const totalCircumference = 326.72;
       const progress = remaining / timerDuration;
       const offset = totalCircumference * (1 - progress);
-      document.getElementById('timer-progress-ring').style.strokeDashoffset = offset;
+      const ring = document.getElementById('timer-progress-ring');
+      if (ring) ring.style.strokeDashoffset = offset;
+
+      // Mini speaking panel updates
+      const miniTimer = document.getElementById('mini-timer-indicator');
+      if (miniTimer) {
+        miniTimer.textContent = isRecording ? `${remaining}s` : `${timerDuration}s`;
+      }
+      const miniProgress = document.getElementById('mini-speaking-progress-fill');
+      if (miniProgress) {
+        const elapsedPercent = isRecording ? Math.max(0, Math.min(100, ((timerDuration - remaining) / timerDuration) * 100)) : 0;
+        miniProgress.style.width = `${elapsedPercent}%`;
+      }
     }
 
-    function saveRecordedSession(audioUrl, blob, transcriptionText) {
+    function saveRecordedSession(audioUrl, blob, transcriptionText, mimeType) {
       const now = new Date();
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
       
@@ -2250,6 +3110,7 @@
         time: timeStr,
         url: audioUrl,
         blob: blob,
+        mimeType: mimeType || (blob && blob.type) || '',
         duration: timerDuration - timerRemaining,
         text: transcriptionText || '（文字起こし結果なし）',
         targetText: target
@@ -2257,6 +3118,94 @@
 
       recordedAudios.unshift(recordItem);
       renderRecordingHistory();
+      updateMiniPlayLatestButtonState();
+    }
+
+    function togglePlayLatestRecording() {
+      if (recordedAudios.length === 0) {
+        showToast('まだ録音がありません。「録音開始」を押して練習してください');
+        return;
+      }
+      const latest = recordedAudios[0];
+      if (!latest || !latest.url) {
+        showToast('再生可能な録音データがありません');
+        return;
+      }
+
+      if (latestAudioPlayer && !latestAudioPlayer.paused) {
+        latestAudioPlayer.pause();
+        updateMiniLatestPlayIcon(false);
+        return;
+      }
+
+      // Stop any other active media / speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      document.querySelectorAll('audio').forEach(a => {
+        if (a !== latestAudioPlayer) a.pause();
+      });
+
+      if (!latestAudioPlayer || latestAudioPlayer.src !== latest.url) {
+        latestAudioPlayer = new Audio(latest.url);
+        latestAudioPlayer.onended = () => {
+          updateMiniLatestPlayIcon(false);
+        };
+        latestAudioPlayer.onpause = () => {
+          updateMiniLatestPlayIcon(false);
+        };
+        latestAudioPlayer.onerror = (e) => {
+          console.warn('Audio playback error:', e);
+          updateMiniLatestPlayIcon(false);
+          showToast('音声の再生に失敗しました', 'error');
+        };
+      }
+
+      latestAudioPlayer.play().then(() => {
+        updateMiniLatestPlayIcon(true);
+      }).catch(err => {
+        console.warn('Playback error:', err);
+        updateMiniLatestPlayIcon(false);
+      });
+    }
+
+    function updateMiniLatestPlayIcon(isPlaying) {
+      const playIcon = document.getElementById('mini-latest-play-icon');
+      const pauseIcon = document.getElementById('mini-latest-pause-icon');
+      const badge = document.getElementById('mini-latest-time-badge');
+      if (playIcon && pauseIcon) {
+        playIcon.classList.toggle('hidden', isPlaying);
+        pauseIcon.classList.toggle('hidden', !isPlaying);
+      }
+      if (badge) {
+        if (isPlaying) {
+          badge.textContent = '停止';
+        } else if (recordedAudios.length > 0 && recordedAudios[0].duration) {
+          badge.textContent = `${recordedAudios[0].duration}s 再生`;
+        } else {
+          badge.textContent = '最新再生';
+        }
+      }
+    }
+
+    function updateMiniPlayLatestButtonState() {
+      const btn = document.getElementById('mini-play-latest-btn');
+      const badge = document.getElementById('mini-latest-time-badge');
+      if (!btn) return;
+      if (recordedAudios.length > 0 && recordedAudios[0].url) {
+        btn.classList.remove('opacity-40', 'cursor-not-allowed');
+        btn.classList.add('hover:bg-slate-700', 'active:scale-95', 'cursor-pointer');
+        btn.removeAttribute('disabled');
+        if (badge) {
+          const isPlaying = latestAudioPlayer && !latestAudioPlayer.paused;
+          badge.textContent = isPlaying ? '停止' : (recordedAudios[0].duration ? `${recordedAudios[0].duration}s 再生` : '最新再生');
+        }
+      } else {
+        btn.classList.add('opacity-40', 'cursor-not-allowed');
+        btn.classList.remove('hover:bg-slate-700', 'active:scale-95', 'cursor-pointer');
+        btn.setAttribute('disabled', 'true');
+        if (badge) badge.textContent = '最新再生';
+      }
     }
 
     function renderRecordingHistory() {
@@ -2278,6 +3227,8 @@
         const card = document.createElement('div');
         card.className = 'p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-colors';
 
+        const ext = (item.mimeType && (item.mimeType.includes('mp4') || item.mimeType.includes('aac'))) ? 'mp4' : 'webm';
+
         card.innerHTML = `
           <div class="flex items-center justify-between text-xs text-slate-500">
             <div class="flex items-center gap-1.5 font-semibold text-slate-700">
@@ -2286,17 +3237,29 @@
             </div>
             <div class="flex items-center gap-2">
               <span class="px-1.5 py-0.5 bg-slate-200 rounded text-[10px] font-mono">${item.duration}秒</span>
-              <a href="${item.url}" download="${item.lang}_practice_${item.time.replace(/:/g, '')}.webm" class="text-rose-600 hover:underline text-[11px]">DL</a>
+              ${item.url ? `<a href="${item.url}" download="${item.lang}_practice_${item.time.replace(/:/g, '')}.${ext}" class="text-rose-600 hover:underline text-[11px]">DL</a>` : ''}
             </div>
           </div>
-          <audio controls src="${item.url}" class="w-full h-8 mt-1"></audio>
+          ${item.url ? `<audio controls src="${item.url}" class="w-full h-8 mt-1"></audio>` : ''}
           <div class="text-xs bg-white p-2 rounded-lg border border-slate-100">
             <span class="text-slate-400 font-medium text-[11px] block mb-0.5">文字起こし結果:</span>
             <p class="${item.lang === 'zh' ? 'font-cn' : 'font-sans'} text-slate-800">${escapeHtml(item.text)}</p>
           </div>
         `;
+
+        const audioEl = card.querySelector('audio');
+        if (audioEl) {
+          audioEl.onplay = () => {
+            if (latestAudioPlayer && !latestAudioPlayer.paused && latestAudioPlayer !== audioEl) {
+              latestAudioPlayer.pause();
+              updateMiniLatestPlayIcon(false);
+            }
+          };
+        }
+
         container.appendChild(card);
       });
+      updateMiniPlayLatestButtonState();
     }
 
     function renderCatalogGrid(filterTag) {
@@ -2692,6 +3655,18 @@
       if (tab !== currentTab) window.scrollTo({ top: 0 });
       currentTab = tab;
       document.body.classList.toggle('has-mini-player', tab === 'listening');
+      document.body.classList.toggle('has-mini-speaking', tab === 'speaking');
+      document.body.classList.toggle('mini-speaking-transcribe', tab === 'speaking' && speakingInputMode === 'transcribe');
+      if (tab === 'speaking') {
+        checkMobileBrowserSpeechSupport();
+        updateSpeakingInputModeUI();
+        updateSpeakingMiniSentenceCounter();
+        const miniTimer = document.getElementById('mini-timer-indicator');
+        if (miniTimer) {
+          miniTimer.textContent = isRecording ? `${timerRemaining}s` : `${timerDuration}s`;
+        }
+        updateMiniPlayLatestButtonState();
+      }
     }
 
     function toggleTranslationVisibility() {
